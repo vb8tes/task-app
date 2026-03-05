@@ -171,6 +171,23 @@
             gap: 6px;
         }
 
+        .col-drag-handle {
+            cursor: grab;
+            color: #bbb;
+            font-size: 18px;
+            padding: 2px 4px;
+            flex-shrink: 0;
+            user-select: none;
+            line-height: 1;
+        }
+
+        .col-drag-handle:hover { color: #888; }
+        .col-drag-handle:active { cursor: grabbing; }
+
+        .column.col-dragging { opacity: 0.45; }
+        .column.col-drop-left { border-left: 3px solid #4CAF50; }
+        .column.col-drop-right { border-right: 3px solid #4CAF50; }
+
         .column-title {
             flex: 1;
             font-weight: bold;
@@ -368,7 +385,7 @@
         </button>
     </div>
 
-    <!-- Loading -->
+    <!-- Loading  Screen-->
     <div id="loading">Loading your board...</div>
 
     <!-- User bar -->
@@ -406,6 +423,7 @@
 
         let currentUser = null;
         let draggedCard = null;
+        let draggedColumn = null;
         let saveTimer = null;
 
         // ── Placeholder rotation ──────────────────────────────────────
@@ -540,6 +558,7 @@
             col.dataset.id = id;
             col.innerHTML = `
                 <div class="column-header">
+                    <div class="col-drag-handle" title="Drag to reorder">⠿</div>
                     <input class="column-title" type="text" value="${name}" title="Click to rename" />
                     <button class="delete-col-btn" title="Delete column">✕</button>
                 </div>
@@ -559,12 +578,54 @@
                 if (e.key === 'Enter') window.addTask(col);
             });
 
-            col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
-            col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
+            // Column drag handle
+            const handle = col.querySelector('.col-drag-handle');
+            handle.addEventListener('mousedown', () => col.draggable = true);
+            handle.addEventListener('dragstart', e => {
+                draggedColumn = col;
+                col.classList.add('col-dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.stopPropagation();
+            });
+            col.addEventListener('dragend', () => {
+                col.draggable = false;
+                col.classList.remove('col-dragging');
+                draggedColumn = null;
+                document.querySelectorAll('.column').forEach(c => {
+                    c.classList.remove('col-drop-left', 'col-drop-right');
+                });
+            });
+
+            col.addEventListener('dragover', e => {
+                e.preventDefault();
+                if (draggedColumn && draggedColumn !== col) {
+                    document.querySelectorAll('.column').forEach(c => c.classList.remove('col-drop-left', 'col-drop-right'));
+                    const rect = col.getBoundingClientRect();
+                    col.classList.add(e.clientX < rect.left + rect.width / 2 ? 'col-drop-left' : 'col-drop-right');
+                } else if (draggedCard) {
+                    col.classList.add('drag-over');
+                }
+            });
+
+            col.addEventListener('dragleave', e => {
+                if (!col.contains(e.relatedTarget)) {
+                    col.classList.remove('drag-over', 'col-drop-left', 'col-drop-right');
+                }
+            });
+
             col.addEventListener('drop', e => {
                 e.preventDefault();
-                col.classList.remove('drag-over');
-                if (draggedCard) {
+                col.classList.remove('drag-over', 'col-drop-left', 'col-drop-right');
+
+                if (draggedColumn && draggedColumn !== col) {
+                    const rect = col.getBoundingClientRect();
+                    if (e.clientX < rect.left + rect.width / 2) {
+                        col.parentNode.insertBefore(draggedColumn, col);
+                    } else {
+                        col.parentNode.insertBefore(draggedColumn, col.nextSibling);
+                    }
+                    saveBoard();
+                } else if (draggedCard) {
                     const target = draggedCard.classList.contains('done')
                         ? col.querySelector('.completed-list')
                         : col.querySelector('.task-list');
