@@ -403,7 +403,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // ── Firebase init ─────────────────────────────────────────────
@@ -696,8 +696,17 @@
 
         // ── Auth ──────────────────────────────────────────────────────
         document.getElementById('google-signin-btn').addEventListener('click', async () => {
-            try { await signInWithRedirect(auth, provider); }
-            catch (e) { console.error('Sign in failed:', e); }
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+                    // Popup was blocked — fall back to redirect
+                    try { await signInWithRedirect(auth, provider); }
+                    catch (e2) { console.error('Redirect sign in failed:', e2); }
+                } else {
+                    console.error('Sign in failed:', e);
+                }
+            }
         });
 
         // Handle redirect result when returning from Google login
