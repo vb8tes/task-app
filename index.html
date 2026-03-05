@@ -403,7 +403,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // ── Firebase init ─────────────────────────────────────────────
@@ -696,9 +696,16 @@
 
         // ── Auth ──────────────────────────────────────────────────────
         document.getElementById('google-signin-btn').addEventListener('click', async () => {
-            try { await signInWithPopup(auth, provider); }
+            try { await signInWithRedirect(auth, provider); }
             catch (e) { console.error('Sign in failed:', e); }
         });
+
+        // Handle redirect result when returning from Google login
+        try {
+            await getRedirectResult(auth);
+        } catch (e) {
+            console.error('Redirect result error:', e);
+        }
 
         document.getElementById('signout-btn').addEventListener('click', async () => {
             document.querySelectorAll('.column').forEach(c => c.remove());
