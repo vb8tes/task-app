@@ -3,193 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <title>Sisyphus</title>
-
-<!-- Formatting Section -->
     <style>
-        /* Overall Design Template*/
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         html {
-            min-height: 100%;
-            background: url('SisyphusImage1.png') no-repeat center center fixed;
+            background: #000 url('SisyphusImage2.png') no-repeat center center fixed;
             background-size: cover;
+            overflow-x: auto;
         }
 
         body {
             font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 60px auto;
-            padding: 20px;
-            background: rgba(245, 245, 245, 0.88);
-            border-radius: 8px;
+            padding: 80px 24px 40px;
+            box-sizing: border-box;
+            min-height: 100%;
+            min-width: max-content;
         }
 
-        /* Heading 1 Design */
-        h1 { color: #333;font-size: 20px; }
+        h1 {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            margin: 0;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+            z-index: 100;
+            pointer-events: none;
+        }
 
-        /* Input Task Box Formatting */
-        input {
-            width: 100%;
-            padding: 10px;
+        /* Board */
+        .board {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding-bottom: 24px;
+        }
+
+        /* Column */
+        .column {
+            background: rgba(245, 245, 245, 0.9);
+            border-radius: 8px;
+            padding: 16px;
+            min-width: 420px;
+            width: 420px;
+            flex-shrink: 0;
+            transition: background 0.15s, outline 0.15s;
+            box-sizing: border-box;
+        }
+
+        .column.drag-over {
+            background: rgba(220, 240, 220, 0.95);
+            outline: 2px dashed #4CAF50;
+        }
+
+        /* Column header */
+        .column-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 6px;
+        }
+
+        .column-title {
+            flex: 1;
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+            border: none;
+            background: transparent;
+            font-family: Arial, sans-serif;
+            padding: 3px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .column-title:focus {
+            outline: 2px solid #4CAF50;
+            background: white;
+            cursor: text;
+        }
+
+        .delete-col-btn {
+            background: transparent;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
             font-size: 16px;
+            padding: 2px 5px;
+            line-height: 1;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .delete-col-btn:hover { color: #e74c3c; }
+
+        /* Add task input */
+        .task-input-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            font-family: Arial, sans-serif;
+            min-width: 0;
         }
 
-        input::placeholder {
-            font-style: italic;
-        }
+        .task-input::placeholder { font-style: italic; }
 
-        /* Button Design Template */
-        button {
-            padding: 10px 16px;
-            font-size: 16px;
+        .add-task-btn {
+            font-size: 14px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 8px;
+            flex-shrink: 0;
+            width: 90px;
         }
-        /* Task container */
-        ul { list-style: none; padding: 0; margin-top: 24px; }
 
-        /* Task Design */
-        li {
+        .add-task-btn:hover { background: #43a047; }
+
+        /* Task lists */
+        .task-list,
+        .completed-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            min-height: 20px;
+        }
+
+        /* Task card */
+        .task-card {
             background: white;
-            padding: 12px 16px;
+            padding: 10px 12px;
             margin-bottom: 8px;
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: grab;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.15s;
         }
 
-        /* Strikethrough when task is done */
-        li.done span { text-decoration: line-through; color: #aaa; }
+        .task-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
-        /* Divider with "Completed" label above first done task */
-        li:not(.done) + li.done {
-            margin-top: 40px;
-            position: relative;
+        .task-card.dragging {
+            opacity: 0.45;
+            cursor: grabbing;
         }
 
-        li:not(.done) + li.done::after {
+        /* Done state */
+        .task-card.done span {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .task-card span {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            word-break: break-word;
+        }
+
+        /* Card buttons */
+        .card-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 8px;
+            width: 90px;
+        }
+
+        .done-btn,
+        .delete-task-btn {
+            width: 100%;
+            padding: 4px 0;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+        }
+
+        .done-btn { background: #2196F3; }
+        .done-btn:hover { background: #1976D2; }
+
+        .done-btn.undo { background: #78909C; }
+        .done-btn.undo:hover { background: #546E7A; }
+
+        .delete-task-btn { background: #e74c3c; }
+        .delete-task-btn:hover { background: #c0392b; }
+
+        /* Completed divider */
+        .completed-divider {
+            display: none;
+            align-items: center;
+            color: #aaa;
+            font-size: 12px;
+            margin: 16px 0 12px;
+            gap: 8px;
+        }
+
+        .completed-divider.visible { display: flex; }
+
+        .completed-divider::before,
+        .completed-divider::after {
             content: '';
-            position: absolute;
-            top: -20px;
-            left: 0;
-            right: 0;
+            flex: 1;
             height: 1px;
             background: #ccc;
         }
 
-        li:not(.done) + li.done::before {
-            content: 'Completed';
-            position: absolute;
-            top: -28px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Add column button */
+        .add-column-btn {
             background: rgba(245, 245, 245, 0.88);
-            padding: 0 10px;
-            color: #aaa;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1;
-        }
-        .delete { background: #e74c3c; padding: 6px 10px; font-size: 13px; }
-        .done-btn { background: #2196F3; padding: 6px 10px; font-size: 13px; }
-        .button-group { display: flex; gap: 4px; }
-        .input-row {
-    display: flex;
-    gap: 8px;
-}
-        .note {
-            font-style: italic;
-            color: #666;
-            margin-top: 30px;
-            font-size: 14px;
+            border: 2px dashed #888;
+            border-radius: 8px;
+            min-width: 200px;
+            width: 200px;
+            flex-shrink: 0;
+            cursor: pointer;
+            color: #444;
+            font-size: 15px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
             text-align: center;
+            padding: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: stretch;
+        }
+
+        .add-column-btn:hover {
+            background: rgba(245, 245, 245, 1);
+            color: #111;
+            border-color: #555;
         }
     </style>
-
-
 </head>
 <body>
-    <h1>Hey Sisyphus, Get That Bolder Rolling!</h1>
-
-    
-<div class="input-row">
-    <input type="text" id="taskInput" placeholder="Awwww Shiiit. Here we go again..." />
-    <button onclick="addTask()">Task Me Harder</button>
-</div>
-    <ul id="taskList"></ul>
+    <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
+<div class="board" id="board">
+        <button class="add-column-btn" id="addColumnBtn" onclick="addColumn()">+ New Struggle</button>
+    </div>
 
     <script>
-        function saveTasks() {
-            const tasks = [];
-            document.querySelectorAll('#taskList li').forEach(li => {
-                tasks.push({
-                    text: li.querySelector('span').textContent,
-                    done: li.classList.contains('done')
-                });
-            });
-            localStorage.setItem('sisyphusTasks', JSON.stringify(tasks));
+        let draggedCard = null;
+
+        // ── Placeholder rotation ──────────────────────────────────────
+        const PLACEHOLDERS = [
+            "Add to your burdens...",
+            "What fresh torment awaits?",
+            "Name your boulder...",
+            "Another rock to push?",
+            "Describe your eternal task...",
+            "The mountain demands more\u2026",
+            "Your next uphill battle...",
+            "Resistance is futile\u2026",
+            "On a roll? Add it here.",
+            "Lift it or live with it...",
+            "Press on, Sisyphus...",
+            "Rock and a hard place?",
+            "Push come to shove...",
+            "Feeling boulder today?",
+            "Time to toil?",
+            "Prometheus had it worse\u2026",
+            "The gods demand it...",
+            "Hades is watching...",
+            "The summit awaits...",
+            "Up the hill again?",
+            "Back to the grind?",
+            "What did fate decree?",
+            "The mountain is patient...",
+            "Uphill from here...",
+            "Another eternal rep?",
+            "Unearth your next task...",
+            "Hit rock bottom? Push up.",
+            "Rolling with it?",
+            "No rest for the wicked...",
+            "What must be endured?",
+            "Sweat now, sweat later...",
+            "What grinds you down?",
+            "The toil must go on...",
+            "Name your next ordeal..."
+        ];
+
+        function startPlaceholderRotation(input) {
+            let lastIndex = -1;
+            function setRandom() {
+                let index;
+                do { index = Math.floor(Math.random() * PLACEHOLDERS.length); }
+                while (index === lastIndex);
+                input.placeholder = PLACEHOLDERS[index];
+                lastIndex = index;
+            }
+            setRandom();
+            setInterval(setRandom, 120000);
+            // expose so addTask can trigger a rotation after each submission
+            input._rotatePlaceholder = setRandom;
         }
 
-        function createTaskElement(text, done = false) {
+        // ── Persistence ──────────────────────────────────────────────
+        function saveBoard() {
+            const columns = [];
+            document.querySelectorAll('.column').forEach(col => {
+                const tasks = [];
+                const completed = [];
+                col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
+                col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
+                columns.push({
+                    id: col.dataset.id,
+                    name: col.querySelector('.column-title').value,
+                    tasks,
+                    completed
+                });
+            });
+            localStorage.setItem('sisyphusBoard', JSON.stringify(columns));
+        }
+
+        // ── Divider visibility ────────────────────────────────────────
+        function updateDivider(col) {
+            const hasCompleted = col.querySelector('.completed-list').children.length > 0;
+            col.querySelector('.completed-divider').classList.toggle('visible', hasCompleted);
+        }
+
+        // ── Create task card ──────────────────────────────────────────
+        function createTaskCard(text, done = false) {
             const li = document.createElement('li');
-            if (done) li.classList.add('done');
+            li.className = 'task-card' + (done ? ' done' : '');
+            li.draggable = true;
             li.innerHTML = `
                 <span>${text}</span>
-                <div class="button-group">
-                    <button class="done-btn" onclick="toggleDone(this.parentElement.parentElement)">Done</button>
-                    <button class="delete" onclick="deleteTask(this.parentElement.parentElement)">Delete Me</button>
-                </div>
-            `;
+                <div class="card-buttons">
+                    <button class="${done ? 'done-btn undo' : 'done-btn'}"
+                        onclick="toggleDone(this.closest('.task-card'))">
+                        ${done ? 'It Rolled Back' : 'Summit!'}
+                    </button>
+                    <button class="delete-task-btn"
+                        onclick="deleteTask(this.closest('.task-card'))">Drop It</button>
+                </div>`;
+
+            li.addEventListener('dragstart', e => {
+                draggedCard = li;
+                li.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            li.addEventListener('dragend', () => {
+                li.classList.remove('dragging');
+                document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+            });
+
             return li;
         }
 
-        function addTask() {
-            const input = document.getElementById('taskInput');
+        // ── Create column ─────────────────────────────────────────────
+        function createColumnElement(id, name, tasks = [], completed = []) {
+            const col = document.createElement('div');
+            col.className = 'column';
+            col.dataset.id = id;
+            col.innerHTML = `
+                <div class="column-header">
+                    <input class="column-title" type="text" value="${name}" title="Click to rename" />
+                    <button class="delete-col-btn" onclick="deleteColumn(this.closest('.column'))" title="Delete column">✕</button>
+                </div>
+                <div class="task-input-row">
+                    <input class="task-input" type="text" />
+                    <button class="add-task-btn" onclick="addTask(this.closest('.column'))">Push It</button>
+                </div>
+                <ul class="task-list"></ul>
+                <div class="completed-divider">Rolled Over the Top</div>
+                <ul class="completed-list"></ul>`;
+
+            col.querySelector('.column-title').addEventListener('change', saveBoard);
+            startPlaceholderRotation(col.querySelector('.task-input'));
+            col.querySelector('.task-input').addEventListener('keypress', e => {
+                if (e.key === 'Enter') addTask(col);
+            });
+
+            // Drag-and-drop
+            col.addEventListener('dragover', e => {
+                e.preventDefault();
+                col.classList.add('drag-over');
+            });
+            col.addEventListener('dragleave', e => {
+                if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+            });
+            col.addEventListener('drop', e => {
+                e.preventDefault();
+                col.classList.remove('drag-over');
+                if (draggedCard) {
+                    // Drop into the appropriate list based on done state
+                    if (draggedCard.classList.contains('done')) {
+                        col.querySelector('.completed-list').appendChild(draggedCard);
+                    } else {
+                        col.querySelector('.task-list').appendChild(draggedCard);
+                    }
+                    // Update dividers on all columns
+                    document.querySelectorAll('.column').forEach(c => updateDivider(c));
+                    draggedCard = null;
+                    saveBoard();
+                }
+            });
+
+            // Populate tasks
+            tasks.forEach(text => col.querySelector('.task-list').appendChild(createTaskCard(text, false)));
+            completed.forEach(text => col.querySelector('.completed-list').appendChild(createTaskCard(text, true)));
+            updateDivider(col);
+
+            return col;
+        }
+
+        // ── Actions ───────────────────────────────────────────────────
+        function addTask(col) {
+            const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
-            document.getElementById('taskList').prepend(createTaskElement(text));
+            col.querySelector('.task-list').prepend(createTaskCard(text, false));
             input.value = '';
-            saveTasks();
+            if (input._rotatePlaceholder) input._rotatePlaceholder();
+            saveBoard();
         }
 
-        function toggleDone(li) {
-            li.classList.toggle('done');
-            const taskList = document.getElementById('taskList');
-            if (li.classList.contains('done')) {
-                taskList.appendChild(li);
+        function toggleDone(card) {
+            const col = card.closest('.column');
+            const isDone = card.classList.toggle('done');
+            const btn = card.querySelector('.done-btn');
+            btn.textContent = isDone ? 'It Rolled Back' : 'Summit!';
+            btn.classList.toggle('undo', isDone);
+
+            if (isDone) {
+                col.querySelector('.completed-list').appendChild(card);
             } else {
-                taskList.prepend(li);
+                col.querySelector('.task-list').prepend(card);
             }
-            saveTasks();
+
+            updateDivider(col);
+            saveBoard();
         }
 
-        function deleteTask(li) {
-            li.remove();
-            saveTasks();
+        function deleteTask(card) {
+            const col = card.closest('.column');
+            card.remove();
+            updateDivider(col);
+            saveBoard();
         }
 
-        function loadTasks() {
-            const saved = localStorage.getItem('sisyphusTasks');
-            if (!saved) return;
-            const tasks = JSON.parse(saved);
-            const active = tasks.filter(t => !t.done);
-            const done = tasks.filter(t => t.done);
-            [...active, ...done].forEach(task => {
-                document.getElementById('taskList').appendChild(createTaskElement(task.text, task.done));
-            });
+        function deleteColumn(col) {
+            const taskCount = col.querySelectorAll('.task-card').length;
+            const msg = taskCount > 0
+                ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
+                : 'Abandon this struggle? This cannot be undone.';
+            if (!confirm(msg)) return;
+            col.remove();
+            saveBoard();
         }
 
-        document.getElementById('taskInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addTask();
-        });
+        function addColumn(name = null, tasks = [], completed = []) {
+            if (!name) {
+                const count = document.querySelectorAll('.column').length + 1;
+                name = 'Mountain ' + count;
+            }
+            const id = 'col-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+            const col = createColumnElement(id, name, tasks, completed);
+            document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
+            saveBoard();
+            return col;
+        }
 
-        loadTasks();
+        // ── Load ──────────────────────────────────────────────────────
+        function loadBoard() {
+            const saved = localStorage.getItem('sisyphusBoard');
+            if (saved) {
+                JSON.parse(saved).forEach(c => {
+                    const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
+                    document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
+                });
+            } else {
+                ['Mountain 1', 'Mountain 2', 'Mountain 3'].forEach(name => addColumn(name));
+            }
+        }
+
+        loadBoard();
     </script>
-    <p class="note">Note: If you delete your browser history, you will lose your task list</p>
 </body>
 </html>
