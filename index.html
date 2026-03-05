@@ -23,6 +23,108 @@
             min-width: max-content;
         }
 
+        /* ── Login Screen ──────────────────────────────────────── */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            min-width: 100vw;
+        }
+
+        #login-screen h2 {
+            color: white;
+            font-size: 32px;
+            margin: 0 0 8px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        #login-screen p {
+            color: rgba(255,255,255,0.75);
+            font-size: 16px;
+            margin: 0 0 32px;
+        }
+
+        #google-signin-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            color: #444;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            font-family: Arial, sans-serif;
+        }
+
+        #google-signin-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        #google-signin-btn svg { width: 20px; height: 20px; }
+
+        /* ── Loading ───────────────────────────────────────────── */
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 8888;
+            color: white;
+            font-size: 18px;
+            min-width: 100vw;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* ── User bar ──────────────────────────────────────────── */
+        #user-bar {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 200;
+        }
+
+        #user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6);
+        }
+
+        #user-name {
+            color: white;
+            font-size: 13px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+
+        #signout-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+        }
+
+        #signout-btn:hover { background: rgba(255,255,255,0.28); }
+
+        /* ── Title ─────────────────────────────────────────────── */
         h1 {
             position: fixed;
             top: 20px;
@@ -37,7 +139,7 @@
             pointer-events: none;
         }
 
-        /* Board */
+        /* ── Board ─────────────────────────────────────────────── */
         .board {
             display: flex;
             gap: 16px;
@@ -45,7 +147,7 @@
             padding-bottom: 24px;
         }
 
-        /* Column */
+        /* ── Column ────────────────────────────────────────────── */
         .column {
             background: rgba(245, 245, 245, 0.9);
             border-radius: 8px;
@@ -62,7 +164,6 @@
             outline: 2px dashed #4CAF50;
         }
 
-        /* Column header */
         .column-header {
             display: flex;
             align-items: center;
@@ -104,7 +205,7 @@
 
         .delete-col-btn:hover { color: #e74c3c; }
 
-        /* Add task input */
+        /* ── Task input ────────────────────────────────────────── */
         .task-input-row {
             display: flex;
             gap: 6px;
@@ -136,7 +237,7 @@
 
         .add-task-btn:hover { background: #43a047; }
 
-        /* Task lists */
+        /* ── Task lists ────────────────────────────────────────── */
         .task-list,
         .completed-list {
             list-style: none;
@@ -145,7 +246,7 @@
             min-height: 20px;
         }
 
-        /* Task card */
+        /* ── Task card ─────────────────────────────────────────── */
         .task-card {
             background: white;
             padding: 10px 12px;
@@ -160,17 +261,8 @@
         }
 
         .task-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-
-        .task-card.dragging {
-            opacity: 0.45;
-            cursor: grabbing;
-        }
-
-        /* Done state */
-        .task-card.done span {
-            text-decoration: line-through;
-            color: #aaa;
-        }
+        .task-card.dragging { opacity: 0.45; cursor: grabbing; }
+        .task-card.done span { text-decoration: line-through; color: #aaa; }
 
         .task-card span {
             flex: 1;
@@ -179,7 +271,7 @@
             word-break: break-word;
         }
 
-        /* Card buttons */
+        /* ── Card buttons ──────────────────────────────────────── */
         .card-buttons {
             display: flex;
             flex-direction: column;
@@ -204,14 +296,12 @@
 
         .done-btn { background: #2196F3; }
         .done-btn:hover { background: #1976D2; }
-
         .done-btn.undo { background: #78909C; }
         .done-btn.undo:hover { background: #546E7A; }
-
         .delete-task-btn { background: #e74c3c; }
         .delete-task-btn:hover { background: #c0392b; }
 
-        /* Completed divider */
+        /* ── Completed divider ─────────────────────────────────── */
         .completed-divider {
             display: none;
             align-items: center;
@@ -231,7 +321,7 @@
             background: #ccc;
         }
 
-        /* Add column button */
+        /* ── Add column button ─────────────────────────────────── */
         .add-column-btn {
             background: rgba(245, 245, 245, 0.88);
             border: 2px dashed #888;
@@ -260,13 +350,62 @@
     </style>
 </head>
 <body>
-    <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
-<div class="board" id="board">
-        <button class="add-column-btn" id="addColumnBtn" onclick="addColumn()">+ New Struggle</button>
+
+    <!-- Login screen -->
+    <div id="login-screen">
+        <h2>Hey Sisyphus</h2>
+        <p>Sign in to start pushing your boulder.</p>
+        <button id="google-signin-btn">
+            <svg viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Sign in with Google
+        </button>
     </div>
 
-    <script>
+    <!-- Loading -->
+    <div id="loading">Loading your board...</div>
+
+    <!-- User bar -->
+    <div id="user-bar">
+        <img id="user-avatar" src="" alt="" />
+        <span id="user-name"></span>
+        <button id="signout-btn">Sign Out</button>
+    </div>
+
+    <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
+
+    <div class="board" id="board" style="display:none">
+        <button class="add-column-btn" id="addColumnBtn">+ New Struggle</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // ── Firebase init ─────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyDV073-5AyLhdp7CRerBH_GwffcQ2Ke96M",
+            authDomain: "mysisyphus-xyz.firebaseapp.com",
+            projectId: "mysisyphus-xyz",
+            storageBucket: "mysisyphus-xyz.firebasestorage.app",
+            messagingSenderId: "2656917074",
+            appId: "1:2656917074:web:28a63230526b574742f18b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
         let draggedCard = null;
+        let saveTimer = null;
 
         // ── Placeholder rotation ──────────────────────────────────────
         const PLACEHOLDERS = [
@@ -317,35 +456,57 @@
             }
             setRandom();
             setInterval(setRandom, 120000);
-            // expose so addTask can trigger a rotation after each submission
             input._rotatePlaceholder = setRandom;
         }
 
-        // ── Persistence ──────────────────────────────────────────────
+        // ── Firestore save / load ─────────────────────────────────────
         function saveBoard() {
-            const columns = [];
-            document.querySelectorAll('.column').forEach(col => {
-                const tasks = [];
-                const completed = [];
-                col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
-                col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
-                columns.push({
-                    id: col.dataset.id,
-                    name: col.querySelector('.column-title').value,
-                    tasks,
-                    completed
+            if (!currentUser) return;
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(async () => {
+                const columns = [];
+                document.querySelectorAll('.column').forEach(col => {
+                    const tasks = [];
+                    const completed = [];
+                    col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
+                    col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
+                    columns.push({
+                        id: col.dataset.id,
+                        name: col.querySelector('.column-title').value,
+                        tasks,
+                        completed
+                    });
                 });
-            });
-            localStorage.setItem('sisyphusBoard', JSON.stringify(columns));
+                try {
+                    await setDoc(doc(db, 'users', currentUser.uid, 'board', 'data'), { columns });
+                } catch (e) {
+                    console.error('Save failed:', e);
+                }
+            }, 500);
         }
 
-        // ── Divider visibility ────────────────────────────────────────
+        async function loadBoard() {
+            try {
+                const snap = await getDoc(doc(db, 'users', currentUser.uid, 'board', 'data'));
+                if (snap.exists()) {
+                    snap.data().columns.forEach(c => {
+                        const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
+                        document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
+                    });
+                } else {
+                    ['Mountain 1', 'Mountain 2', 'Mountain 3'].forEach(name => addColumn(name));
+                }
+            } catch (e) {
+                console.error('Load failed:', e);
+            }
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────
         function updateDivider(col) {
             const hasCompleted = col.querySelector('.completed-list').children.length > 0;
             col.querySelector('.completed-divider').classList.toggle('visible', hasCompleted);
         }
 
-        // ── Create task card ──────────────────────────────────────────
         function createTaskCard(text, done = false) {
             const li = document.createElement('li');
             li.className = 'task-card' + (done ? ' done' : '');
@@ -354,13 +515,12 @@
                 <span>${text}</span>
                 <div class="card-buttons">
                     <button class="${done ? 'done-btn undo' : 'done-btn'}"
-                        onclick="toggleDone(this.closest('.task-card'))">
+                        onclick="window.toggleDone(this.closest('.task-card'))">
                         ${done ? 'It Rolled Back' : 'Summit!'}
                     </button>
                     <button class="delete-task-btn"
-                        onclick="deleteTask(this.closest('.task-card'))">Drop It</button>
+                        onclick="window.deleteTask(this.closest('.task-card'))">Drop It</button>
                 </div>`;
-
             li.addEventListener('dragstart', e => {
                 draggedCard = li;
                 li.classList.add('dragging');
@@ -370,11 +530,9 @@
                 li.classList.remove('dragging');
                 document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
             });
-
             return li;
         }
 
-        // ── Create column ─────────────────────────────────────────────
         function createColumnElement(id, name, tasks = [], completed = []) {
             const col = document.createElement('div');
             col.className = 'column';
@@ -382,57 +540,48 @@
             col.innerHTML = `
                 <div class="column-header">
                     <input class="column-title" type="text" value="${name}" title="Click to rename" />
-                    <button class="delete-col-btn" onclick="deleteColumn(this.closest('.column'))" title="Delete column">✕</button>
+                    <button class="delete-col-btn" title="Delete column">✕</button>
                 </div>
                 <div class="task-input-row">
                     <input class="task-input" type="text" />
-                    <button class="add-task-btn" onclick="addTask(this.closest('.column'))">Push It</button>
+                    <button class="add-task-btn">Push It</button>
                 </div>
                 <ul class="task-list"></ul>
                 <div class="completed-divider">Rolled Over the Top</div>
                 <ul class="completed-list"></ul>`;
 
             col.querySelector('.column-title').addEventListener('change', saveBoard);
+            col.querySelector('.delete-col-btn').addEventListener('click', () => window.deleteColumn(col));
+            col.querySelector('.add-task-btn').addEventListener('click', () => window.addTask(col));
             startPlaceholderRotation(col.querySelector('.task-input'));
             col.querySelector('.task-input').addEventListener('keypress', e => {
-                if (e.key === 'Enter') addTask(col);
+                if (e.key === 'Enter') window.addTask(col);
             });
 
-            // Drag-and-drop
-            col.addEventListener('dragover', e => {
-                e.preventDefault();
-                col.classList.add('drag-over');
-            });
-            col.addEventListener('dragleave', e => {
-                if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
-            });
+            col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+            col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
             col.addEventListener('drop', e => {
                 e.preventDefault();
                 col.classList.remove('drag-over');
                 if (draggedCard) {
-                    // Drop into the appropriate list based on done state
-                    if (draggedCard.classList.contains('done')) {
-                        col.querySelector('.completed-list').appendChild(draggedCard);
-                    } else {
-                        col.querySelector('.task-list').appendChild(draggedCard);
-                    }
-                    // Update dividers on all columns
+                    const target = draggedCard.classList.contains('done')
+                        ? col.querySelector('.completed-list')
+                        : col.querySelector('.task-list');
+                    target.appendChild(draggedCard);
                     document.querySelectorAll('.column').forEach(c => updateDivider(c));
                     draggedCard = null;
                     saveBoard();
                 }
             });
 
-            // Populate tasks
-            tasks.forEach(text => col.querySelector('.task-list').appendChild(createTaskCard(text, false)));
-            completed.forEach(text => col.querySelector('.completed-list').appendChild(createTaskCard(text, true)));
+            tasks.forEach(t => col.querySelector('.task-list').appendChild(createTaskCard(t, false)));
+            completed.forEach(t => col.querySelector('.completed-list').appendChild(createTaskCard(t, true)));
             updateDivider(col);
-
             return col;
         }
 
         // ── Actions ───────────────────────────────────────────────────
-        function addTask(col) {
+        window.addTask = function(col) {
             const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
@@ -440,33 +589,27 @@
             input.value = '';
             if (input._rotatePlaceholder) input._rotatePlaceholder();
             saveBoard();
-        }
+        };
 
-        function toggleDone(card) {
+        window.toggleDone = function(card) {
             const col = card.closest('.column');
             const isDone = card.classList.toggle('done');
             const btn = card.querySelector('.done-btn');
             btn.textContent = isDone ? 'It Rolled Back' : 'Summit!';
             btn.classList.toggle('undo', isDone);
-
-            if (isDone) {
-                col.querySelector('.completed-list').appendChild(card);
-            } else {
-                col.querySelector('.task-list').prepend(card);
-            }
-
+            col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
             updateDivider(col);
             saveBoard();
-        }
+        };
 
-        function deleteTask(card) {
+        window.deleteTask = function(card) {
             const col = card.closest('.column');
             card.remove();
             updateDivider(col);
             saveBoard();
-        }
+        };
 
-        function deleteColumn(col) {
+        window.deleteColumn = function(col) {
             const taskCount = col.querySelectorAll('.task-card').length;
             const msg = taskCount > 0
                 ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
@@ -474,7 +617,7 @@
             if (!confirm(msg)) return;
             col.remove();
             saveBoard();
-        }
+        };
 
         function addColumn(name = null, tasks = [], completed = []) {
             if (!name) {
@@ -487,21 +630,48 @@
             saveBoard();
             return col;
         }
+        window.addColumn = addColumn;
 
-        // ── Load ──────────────────────────────────────────────────────
-        function loadBoard() {
-            const saved = localStorage.getItem('sisyphusBoard');
-            if (saved) {
-                JSON.parse(saved).forEach(c => {
-                    const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
-                    document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
-                });
+        // ── Auth ──────────────────────────────────────────────────────
+        document.getElementById('google-signin-btn').addEventListener('click', async () => {
+            try { await signInWithPopup(auth, provider); }
+            catch (e) { console.error('Sign in failed:', e); }
+        });
+
+        document.getElementById('signout-btn').addEventListener('click', async () => {
+            document.querySelectorAll('.column').forEach(c => c.remove());
+            await signOut(auth);
+        });
+
+        document.getElementById('addColumnBtn').addEventListener('click', () => addColumn());
+
+        onAuthStateChanged(auth, async (user) => {
+            const loginScreen = document.getElementById('login-screen');
+            const loading = document.getElementById('loading');
+            const board = document.getElementById('board');
+            const userBar = document.getElementById('user-bar');
+
+            if (user) {
+                currentUser = user;
+                loginScreen.style.display = 'none';
+                loading.style.display = 'flex';
+
+                const avatar = document.getElementById('user-avatar');
+                document.getElementById('user-name').textContent = user.displayName || user.email;
+                avatar.src = user.photoURL || '';
+                avatar.style.display = user.photoURL ? 'block' : 'none';
+                userBar.style.display = 'flex';
+
+                await loadBoard();
+                loading.style.display = 'none';
+                board.style.display = 'flex';
             } else {
-                ['Mountain 1', 'Mountain 2', 'Mountain 3'].forEach(name => addColumn(name));
+                currentUser = null;
+                board.style.display = 'none';
+                userBar.style.display = 'none';
+                loginScreen.style.display = 'flex';
             }
-        }
-
-        loadBoard();
+        });
     </script>
 </body>
 </html>
