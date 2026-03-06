@@ -418,6 +418,7 @@
         <h2>Hey Sisyphus</h2>
         <p>Sign in to start pushing your boulder.</p>
         <p style="color: rgba(255,255,255,0.5); font-size: 13px; margin: -20px 0 24px; max-width: 320px; text-align: center;">We only use your Google account to identify you — we don't access any other Google data.</p>
+        <p id="signin-error" style="color:#ff6b6b; font-size:13px; margin:12px 0 0; display:none;"></p>
         <button id="google-signin-btn">
             <svg viewBox="0 0 48 48">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -465,10 +466,15 @@
         const app = initializeApp(firebaseConfig);
 
         // ── App Check (reCAPTCHA v3) ──────────────────────────────────
-        initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider('6LfFSYEsAAAAALIpBV89ECmd7gCaxh_iO20Lrn6V'),
-            isTokenAutoRefreshEnabled: true
-        });
+        // Wrapped in try-catch so a reCAPTCHA load failure doesn't crash the whole module
+        try {
+            initializeAppCheck(app, {
+                provider: new ReCaptchaV3Provider('6LfFSYEsAAAAALIpBV89ECmd7gCaxh_iO20Lrn6V'),
+                isTokenAutoRefreshEnabled: true
+            });
+        } catch (e) {
+            console.warn('App Check initialization failed (non-fatal):', e);
+        }
 
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -813,15 +819,23 @@
 
         // ── Auth ──────────────────────────────────────────────────────
         document.getElementById('google-signin-btn').addEventListener('click', async () => {
+            const errorEl = document.getElementById('signin-error');
+            errorEl.style.display = 'none';
             try {
                 await signInWithPopup(auth, provider);
             } catch (e) {
                 if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
                     // Popup was blocked — fall back to redirect
                     try { await signInWithRedirect(auth, provider); }
-                    catch (e2) { console.error('Redirect sign in failed:', e2); }
+                    catch (e2) {
+                        console.error('Redirect sign in failed:', e2);
+                        errorEl.textContent = 'Sign in failed: ' + (e2.message || e2.code);
+                        errorEl.style.display = 'block';
+                    }
                 } else {
                     console.error('Sign in failed:', e);
+                    errorEl.textContent = 'Sign in failed: ' + (e.message || e.code);
+                    errorEl.style.display = 'block';
                 }
             }
         });
