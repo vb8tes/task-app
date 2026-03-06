@@ -1357,13 +1357,19 @@
             activeBoardId = boardId;
             try {
                 const data = await getBoardStoreData();
-                const local = readLocalStore();
-                const columnsByBoard = data.columnsByBoard || local.columnsByBoard || {};
+                const columnsByBoard = data.columnsByBoard || {};
                 const columns = columnsByBoard[boardId];
                 renderColumnsForBoard(columns);
             } catch (e) {
                 console.error('Load failed:', e);
-                DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
+                const local = readLocalStore();
+                const localColumns = (local.columnsByBoard && local.columnsByBoard[boardId]) || null;
+                if (Array.isArray(localColumns) && localColumns.length > 0) {
+                    renderColumnsForBoard(localColumns);
+                    setSyncStatus('error', 'Offline: showing local cache');
+                } else {
+                    DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
+                }
             }
         }
 
@@ -1407,13 +1413,31 @@
                 const local = readLocalStore();
                 const boardsSource = Array.isArray(data.boards) && data.boards.length > 0
                     ? data.boards
-                    : (Array.isArray(local.boards) ? local.boards : null);
+                    : null;
                 if (boardsSource && boardsSource.length > 0) {
                     boardList = boardsSource.map(board => ({
                         id: board.id,
                         name: board.name || 'Gaia',
                         profile: board.profile || generateBoardProfile()
                     }));
+                } else if (Array.isArray(local.boards) && local.boards.length > 0) {
+                    // One-time recovery path: promote local cache to cloud if remote index is empty.
+                    boardList = local.boards.map(board => ({
+                        id: board.id,
+                        name: board.name || 'Gaia',
+                        profile: board.profile || generateBoardProfile()
+                    }));
+                    await persistBoardsIndex();
+                    const localColumnsByBoard = local.columnsByBoard && typeof local.columnsByBoard === 'object'
+                        ? local.columnsByBoard
+                        : {};
+                    for (const board of boardList) {
+                        const cachedCols = localColumnsByBoard[board.id];
+                        if (Array.isArray(cachedCols)) {
+                            await setDoc(boardStoreRef(), { columnsByBoard: { [board.id]: cachedCols } }, { merge: true });
+                        }
+                    }
+                    setSyncStatus('saved', 'Recovered local cache to cloud', 2500);
                 } else {
                     // Migration path: if legacy single-board data exists, seed Gaia 1 from it.
                     const seededColumns = Array.isArray(data.columns)
@@ -1743,7 +1767,9 @@
                 loading.style.display = 'flex';
 
                 const avatar = document.getElementById('user-avatar');
-                document.getElementById('user-name').textContent = user.displayName || user.email;
+                const accountLabel = user.email || user.displayName || 'Unknown account';
+                document.getElementById('user-name').textContent = accountLabel;
+                document.getElementById('user-name').title = `UID: ${user.uid}`;
                 avatar.src = user.photoURL || '';
                 avatar.style.display = user.photoURL ? 'block' : 'none';
                 userBar.style.display = 'flex';
