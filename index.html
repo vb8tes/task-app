@@ -137,43 +137,6 @@
             text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
 
-        #sync-status {
-            font-size: 12px;
-            border-radius: 999px;
-            padding: 3px 8px;
-            border: 1px solid rgba(255,255,255,0.45);
-            background: rgba(0,0,0,0.25);
-            color: rgba(255,255,255,0.95);
-        }
-
-        #sync-status.syncing {
-            border-color: rgba(255,193,7,0.75);
-            color: #ffe082;
-        }
-
-        #sync-status.saved {
-            border-color: rgba(76,175,80,0.75);
-            color: #c8e6c9;
-        }
-
-        #sync-status.error {
-            border-color: rgba(239,83,80,0.85);
-            color: #ffcdd2;
-        }
-
-        #uid-badge {
-            font-size: 11px;
-            border-radius: 999px;
-            padding: 3px 8px;
-            border: 1px solid rgba(255,255,255,0.35);
-            background: rgba(0,0,0,0.25);
-            color: rgba(255,255,255,0.88);
-            max-width: 220px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
         #signout-btn {
             background: rgba(255,255,255,0.15);
             border: 1px solid rgba(255,255,255,0.4);
@@ -232,6 +195,16 @@
         }
 
         .settings-row label { cursor: pointer; }
+
+        .settings-version {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0,0,0,0.12);
+            font-size: 11px;
+            color: #666;
+            text-align: right;
+            letter-spacing: 0.02em;
+        }
 
         /* ── Sidebar ──────────────────────────────────────────── */
         #sidebar {
@@ -428,20 +401,6 @@
             font-style: italic;
             margin: 0;
             text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        #board-user-info {
-            position: absolute;
-            top: 52px;
-            left: 0;
-            right: 0;
-            display: none;
-            text-align: center;
-            font-size: 13px;
-            color: rgba(255,255,255,0.9);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
             z-index: 100;
             pointer-events: none;
         }
@@ -754,8 +713,6 @@
         <div id="user-bar">
             <img id="user-avatar" src="" alt="" />
             <span id="user-name"></span>
-            <span id="sync-status">Sync idle</span>
-            <span id="uid-badge">UID: -</span>
             <button id="signout-btn">Sign Out</button>
             <div id="settings-container">
                 <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
@@ -764,13 +721,11 @@
                         <label for="animations-toggle">Animations</label>
                         <input id="animations-toggle" type="checkbox" checked />
                     </div>
+                    <div id="settings-version" class="settings-version"></div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="board-user-info"></div>
-
     <div class="board" id="board" style="display:none">
         <button class="add-column-btn" id="addColumnBtn">+ New Struggle</button>
     </div>
@@ -806,43 +761,37 @@
         let boardList = [];
         let boardStoreCache = null;
         let unsubscribeBoardStore = null;
-        let syncStatusTimer = null;
         const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
+        const GITHUB_REPO_OWNER = 'vb8tes';
+        const GITHUB_REPO_NAME = 'task-app';
+        const GITHUB_REPO_API = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
         const LEGACY_BOARD_DOC_ID = 'data';
         const DEFAULT_MOUNTAINS = ['Mountain 1', 'Mountain 2', 'Mountain 3'];
+        const loginScreen = document.getElementById('login-screen');
+        const loadingScreen = document.getElementById('loading');
+        const boardEl = document.getElementById('board');
+        const addColumnBtn = document.getElementById('addColumnBtn');
+        const signInBtn = document.getElementById('google-signin-btn');
+        const signInError = document.getElementById('signin-error');
+        const userBar = document.getElementById('user-bar');
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const signOutBtn = document.getElementById('signout-btn');
         const rollbackVideo = document.getElementById('rollback-video');
         const crushedVideo = document.getElementById('crushed-video');
         const summitVideo = document.getElementById('summit-video');
+        const actionVideos = [rollbackVideo, crushedVideo, summitVideo];
         const settingsBtn = document.getElementById('settings-btn');
         const settingsPanel = document.getElementById('settings-panel');
+        const settingsVersion = document.getElementById('settings-version');
         const animationsToggle = document.getElementById('animations-toggle');
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const taskListNav = document.getElementById('task-list-nav');
         const newTaskListBtn = document.getElementById('new-task-list-btn');
-        const boardUserInfo = document.getElementById('board-user-info');
         const currentTaskListLabel = document.getElementById('current-task-list-label');
         const topBar = document.getElementById('top-bar');
-        const syncStatus = document.getElementById('sync-status');
-        const uidBadge = document.getElementById('uid-badge');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
-
-        function setSyncStatus(state, text, autoClearMs = 0) {
-            if (syncStatusTimer) {
-                clearTimeout(syncStatusTimer);
-                syncStatusTimer = null;
-            }
-            syncStatus.classList.remove('syncing', 'saved', 'error');
-            if (state) syncStatus.classList.add(state);
-            syncStatus.textContent = text;
-            if (autoClearMs > 0) {
-                syncStatusTimer = setTimeout(() => {
-                    syncStatus.classList.remove('saved');
-                    syncStatus.textContent = 'Live sync on';
-                    syncStatusTimer = null;
-                }, autoClearMs);
-            }
-        }
 
         function isDesktopBrowser() {
             const ua = navigator.userAgent || '';
@@ -851,8 +800,49 @@
             return !isMobileUA && hasDesktopPointer;
         }
 
+        function createEntityId(prefix, randomLength = 5) {
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 2 + randomLength)}`;
+        }
+
+        function pad2(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function buildVersionStamp(date = new Date()) {
+            const year = String(date.getFullYear()).slice(-2);
+            const month = pad2(date.getMonth() + 1);
+            const day = pad2(date.getDate());
+            const hours = pad2(date.getHours());
+            const minutes = pad2(date.getMinutes());
+            return `ver: ${year}.${month}.${day}.${hours}${minutes}`;
+        }
+
+        async function updateSettingsVersionFromGitHub() {
+            settingsVersion.textContent = 'ver: ---';
+            try {
+                const response = await fetch(GITHUB_REPO_API, {
+                    headers: { Accept: 'application/vnd.github+json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`GitHub API responded ${response.status}`);
+                }
+                const repoMeta = await response.json();
+                const pushedAt = typeof repoMeta?.pushed_at === 'string'
+                    ? new Date(repoMeta.pushed_at)
+                    : null;
+                if (pushedAt && !Number.isNaN(pushedAt.getTime())) {
+                    settingsVersion.textContent = buildVersionStamp(pushedAt);
+                    return;
+                }
+                settingsVersion.textContent = 'ver: ---';
+            } catch (error) {
+                console.warn('GitHub version timestamp unavailable; using placeholder.', error);
+                settingsVersion.textContent = 'ver: ---';
+            }
+        }
+
         function hideAllActionVideos() {
-            document.querySelectorAll('.bg-action-video').forEach(video => {
+            actionVideos.forEach(video => {
                 video.pause();
                 video.style.display = 'none';
             });
@@ -869,7 +859,7 @@
 
         function playActionVideo(videoToPlay) {
             if (!animationsEnabled || !isDesktopBrowser()) return;
-            document.querySelectorAll('.bg-action-video').forEach(video => {
+            actionVideos.forEach(video => {
                 if (video !== videoToPlay) {
                     video.pause();
                     video.style.display = 'none';
@@ -897,14 +887,10 @@
             playActionVideo(summitVideo);
         }
 
-        rollbackVideo.addEventListener('ended', () => {
-            rollbackVideo.style.display = 'none';
-        });
-        crushedVideo.addEventListener('ended', () => {
-            crushedVideo.style.display = 'none';
-        });
-        summitVideo.addEventListener('ended', () => {
-            summitVideo.style.display = 'none';
+        actionVideos.forEach(video => {
+            video.addEventListener('ended', () => {
+                video.style.display = 'none';
+            });
         });
 
         settingsBtn.addEventListener('click', e => {
@@ -916,6 +902,7 @@
         animationsToggle.addEventListener('change', e => {
             setAnimationsEnabled(e.target.checked);
         });
+        updateSettingsVersionFromGitHub();
         currentTaskListLabel.addEventListener('click', async () => {
             if (!activeBoardId) return;
             await renameBoard(activeBoardId);
@@ -923,6 +910,24 @@
         function setSidebarExpanded(expanded) {
             sidebar.classList.toggle('expanded', expanded);
             document.body.classList.toggle('sidebar-expanded', expanded);
+        }
+
+        function insertColumnIntoBoard(columnElement, beforeElement = addColumnBtn) {
+            boardEl.insertBefore(columnElement, beforeElement);
+        }
+
+        function renderDefaultColumns() {
+            const defaultColumns = createDefaultColumns();
+            defaultColumns.forEach(column => {
+                const col = createColumnElement(
+                    column.id,
+                    column.name,
+                    column.tasks || [],
+                    column.completed || []
+                );
+                insertColumnIntoBoard(col);
+            });
+            saveBoard();
         }
 
         sidebarToggle.addEventListener('click', e => {
@@ -1044,14 +1049,6 @@
             }
         }
 
-        function boardsIndexRef() {
-            return boardStoreRef();
-        }
-
-        function boardRef(boardId) {
-            return boardStoreRef();
-        }
-
         async function getBoardStoreData() {
             if (boardStoreCache) return boardStoreCache;
             const snap = await getDoc(boardStoreRef());
@@ -1083,12 +1080,9 @@
                 columnsByBoard: { ...(local.columnsByBoard || {}), [boardId]: columns }
             });
             try {
-                setSyncStatus('syncing', 'Saving...');
                 await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: columns } }, { merge: true });
-                setSyncStatus('saved', 'Saved', 1500);
             } catch (e) {
                 console.error('Save failed:', e);
-                setSyncStatus('error', 'Save failed');
             }
         }
 
@@ -1131,7 +1125,7 @@
 
         function createDefaultColumns() {
             return DEFAULT_MOUNTAINS.map(name => ({
-                id: 'col-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                id: createEntityId('col'),
                 name,
                 tasks: [],
                 completed: []
@@ -1154,16 +1148,21 @@
             return `Gaia ${nextNum}`;
         }
 
+        function createBoardMeta(name = nextTaskListName()) {
+            return {
+                id: createEntityId('board'),
+                name,
+                profile: generateBoardProfile()
+            };
+        }
+
         async function persistBoardsIndex() {
             if (!currentUser) return;
             writeLocalStore({ boards: boardList });
             try {
-                setSyncStatus('syncing', 'Saving...');
-                await setDoc(boardsIndexRef(), { boards: boardList }, { merge: true });
-                setSyncStatus('saved', 'Saved', 1500);
+                await setDoc(boardStoreRef(), { boards: boardList }, { merge: true });
             } catch (e) {
                 console.error('Saving board index failed:', e);
-                setSyncStatus('error', 'Save failed');
             }
         }
 
@@ -1235,7 +1234,6 @@
         function updateBoardUserInfo() {
             const activeBoard = findActiveBoardMeta();
             if (!activeBoard) {
-                boardUserInfo.textContent = '';
                 currentTaskListLabel.textContent = '';
                 currentTaskListLabel.title = '';
                 return;
@@ -1244,9 +1242,8 @@
             const alias = profile.alias || 'Sisyphus';
             const role = profile.role || 'Stone Pusher';
             const tag = profile.tag || '0000';
-            boardUserInfo.textContent = `${activeBoard.name} • ${alias} (${role} #${tag})`;
             currentTaskListLabel.textContent = activeBoard.name || '';
-            currentTaskListLabel.title = 'Click to rename task list';
+            currentTaskListLabel.title = `Click to rename task list (${alias} / ${role} #${tag})`;
         }
 
         function renderTaskListNav() {
@@ -1314,11 +1311,11 @@
             if (Array.isArray(columns) && columns.length > 0) {
                 columns.forEach(c => {
                     const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
-                    document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
+                    insertColumnIntoBoard(col);
                 });
                 return;
             }
-            DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
+            renderDefaultColumns();
         }
 
         function normalizeBoards(boards) {
@@ -1365,11 +1362,9 @@
                         }
                     }
                     renderTaskListNav();
-                    setSyncStatus('', 'Live sync on');
                 },
                 e => {
                     console.error('Live sync failed:', e);
-                    setSyncStatus('error', 'Live sync unavailable');
                 }
             );
         }
@@ -1394,9 +1389,8 @@
                 const localColumns = (local.columnsByBoard && local.columnsByBoard[boardId]) || null;
                 if (Array.isArray(localColumns) && localColumns.length > 0) {
                     renderColumnsForBoard(localColumns);
-                    setSyncStatus('error', 'Offline: showing local cache');
                 } else {
-                    DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
+                    renderDefaultColumns();
                 }
             }
         }
@@ -1412,11 +1406,7 @@
             if (!currentUser) return;
             await flushPendingSave();
             const defaultColumns = createDefaultColumns();
-            const newBoard = {
-                id: 'board-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-                name: nextTaskListName(),
-                profile: generateBoardProfile()
-            };
+            const newBoard = createBoardMeta();
             boardList.push(newBoard);
             try {
                 await setDoc(boardStoreRef(), { columnsByBoard: { [newBoard.id]: defaultColumns } }, { merge: true });
@@ -1443,18 +1433,10 @@
                     ? data.boards
                     : null;
                 if (boardsSource && boardsSource.length > 0) {
-                    boardList = boardsSource.map(board => ({
-                        id: board.id,
-                        name: board.name || 'Gaia',
-                        profile: board.profile || generateBoardProfile()
-                    }));
+                    boardList = normalizeBoards(boardsSource);
                 } else if (Array.isArray(local.boards) && local.boards.length > 0) {
                     // One-time recovery path: promote local cache to cloud if remote index is empty.
-                    boardList = local.boards.map(board => ({
-                        id: board.id,
-                        name: board.name || 'Gaia',
-                        profile: board.profile || generateBoardProfile()
-                    }));
+                    boardList = normalizeBoards(local.boards);
                     await persistBoardsIndex();
                     const localColumnsByBoard = local.columnsByBoard && typeof local.columnsByBoard === 'object'
                         ? local.columnsByBoard
@@ -1465,17 +1447,12 @@
                             await setDoc(boardStoreRef(), { columnsByBoard: { [board.id]: cachedCols } }, { merge: true });
                         }
                     }
-                    setSyncStatus('saved', 'Recovered local cache to cloud', 2500);
                 } else {
                     // Migration path: if legacy single-board data exists, seed Gaia 1 from it.
                     const seededColumns = Array.isArray(data.columns)
                         ? data.columns
                         : createDefaultColumns();
-                    boardList = [{
-                        id: 'board-' + Date.now(),
-                        name: 'Gaia 1',
-                        profile: generateBoardProfile()
-                    }];
+                    boardList = [createBoardMeta('Gaia 1')];
                     try {
                         await setDoc(
                             boardStoreRef(),
@@ -1501,11 +1478,7 @@
                 console.error('Board initialization failed:', e);
                 // Ensure first-time users always land on Gaia 1, even if remote init fails.
                 if (!boardList.length) {
-                    boardList = [{
-                        id: 'board-' + Date.now(),
-                        name: 'Gaia 1',
-                        profile: generateBoardProfile()
-                    }];
+                    boardList = [createBoardMeta('Gaia 1')];
                 }
                 await loadBoard(boardList[0].id);
                 renderTaskListNav();
@@ -1530,12 +1503,12 @@
             const doneBtn = document.createElement('button');
             doneBtn.className = done ? 'done-btn undo' : 'done-btn';
             doneBtn.textContent = done ? 'It Rolled Back' : 'Summit!';
-            doneBtn.addEventListener('click', () => window.toggleDone(li));
+            doneBtn.addEventListener('click', () => toggleDone(li));
 
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-task-btn';
             deleteBtn.textContent = 'Drop It';
-            deleteBtn.addEventListener('click', () => window.deleteTask(li));
+            deleteBtn.addEventListener('click', () => deleteTask(li));
 
             const buttons = document.createElement('div');
             buttons.className = 'card-buttons';
@@ -1573,10 +1546,8 @@
         }
 
         function showDropZones() {
-            const board = document.getElementById('board');
-            const addBtn = document.getElementById('addColumnBtn');
-            board.querySelectorAll('.column').forEach(col => board.insertBefore(makeDropZone(), col));
-            board.insertBefore(makeDropZone(), addBtn);
+            boardEl.querySelectorAll('.column').forEach(col => boardEl.insertBefore(makeDropZone(), col));
+            insertColumnIntoBoard(makeDropZone());
         }
 
         function hideDropZones() {
@@ -1606,11 +1577,11 @@
             col.querySelector('.column-title').value = name;
 
             col.querySelector('.column-title').addEventListener('change', saveBoard);
-            col.querySelector('.delete-col-btn').addEventListener('click', () => window.deleteColumn(col));
-            col.querySelector('.add-task-btn').addEventListener('click', () => window.addTask(col));
+            col.querySelector('.delete-col-btn').addEventListener('click', () => deleteColumn(col));
+            col.querySelector('.add-task-btn').addEventListener('click', () => addTask(col));
             startPlaceholderRotation(col.querySelector('.task-input'));
             col.querySelector('.task-input').addEventListener('keypress', e => {
-                if (e.key === 'Enter') window.addTask(col);
+                if (e.key === 'Enter') addTask(col);
             });
 
             // Column drag handle
@@ -1629,9 +1600,8 @@
                 col.draggable = false;
                 col.classList.remove('col-dragging');
                 if (draggedColumn && activeDropZone) {
-                    const board = document.getElementById('board');
                     const nextEl = activeDropZone.nextElementSibling;
-                    board.insertBefore(draggedColumn, nextEl || document.getElementById('addColumnBtn'));
+                    insertColumnIntoBoard(draggedColumn, nextEl || addColumnBtn);
                     saveBoard();
                 }
                 draggedColumn = null;
@@ -1667,7 +1637,7 @@
         }
 
         // ── Actions ───────────────────────────────────────────────────
-        window.addTask = function(col) {
+        function addTask(col) {
             const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
@@ -1676,9 +1646,9 @@
             input.value = '';
             if (input._rotatePlaceholder) input._rotatePlaceholder();
             saveBoard();
-        };
+        }
 
-        window.toggleDone = function(card) {
+        function toggleDone(card) {
             const col = card.closest('.column');
             const wasDone = card.classList.contains('done');
             const isDone = card.classList.toggle('done');
@@ -1690,17 +1660,17 @@
             col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
             updateDivider(col);
             saveBoard();
-        };
+        }
 
-        window.deleteTask = function(card) {
+        function deleteTask(card) {
             const col = card.closest('.column');
             playCrushedVideo();
             card.remove();
             updateDivider(col);
             saveBoard();
-        };
+        }
 
-        window.deleteColumn = function(col) {
+        function deleteColumn(col) {
             const taskCount = col.querySelectorAll('.task-card').length;
             const msg = taskCount > 0
                 ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
@@ -1712,7 +1682,7 @@
             });
             col.remove();
             saveBoard();
-        };
+        }
 
         function addColumn(name = null, tasks = [], completed = []) {
             if (!name) {
@@ -1720,18 +1690,16 @@
                 name = 'Mountain ' + count;
             }
             if (name.length > 100) name = name.slice(0, 100);
-            const id = 'col-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+            const id = createEntityId('col');
             const col = createColumnElement(id, name, tasks, completed);
-            document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
+            insertColumnIntoBoard(col);
             saveBoard();
             return col;
         }
-        window.addColumn = addColumn;
 
         // ── Auth ──────────────────────────────────────────────────────
-        document.getElementById('google-signin-btn').addEventListener('click', async () => {
-            const errorEl = document.getElementById('signin-error');
-            errorEl.style.display = 'none';
+        signInBtn.addEventListener('click', async () => {
+            signInError.style.display = 'none';
             try {
                 await signInWithPopup(auth, provider);
             } catch (e) {
@@ -1740,13 +1708,13 @@
                     try { await signInWithRedirect(auth, provider); }
                     catch (e2) {
                         console.error('Redirect sign in failed:', e2);
-                        errorEl.textContent = 'Sign in failed: ' + (e2.message || e2.code);
-                        errorEl.style.display = 'block';
+                        signInError.textContent = 'Sign in failed: ' + (e2.message || e2.code);
+                        signInError.style.display = 'block';
                     }
                 } else {
                     console.error('Sign in failed:', e);
-                    errorEl.textContent = 'Sign in failed: ' + (e.message || e.code);
-                    errorEl.style.display = 'block';
+                    signInError.textContent = 'Sign in failed: ' + (e.message || e.code);
+                    signInError.style.display = 'block';
                 }
             }
         });
@@ -1758,7 +1726,7 @@
             console.error('Redirect result error:', e);
         }
 
-        document.getElementById('signout-btn').addEventListener('click', async () => {
+        signOutBtn.addEventListener('click', async () => {
             try {
                 await flushPendingSave();
                 // Sign out first; onAuthStateChanged will handle clearing the board UI
@@ -1769,7 +1737,7 @@
             }
         });
 
-        document.getElementById('addColumnBtn').addEventListener('click', () => addColumn());
+        addColumnBtn.addEventListener('click', () => addColumn());
         newTaskListBtn.addEventListener('click', createTaskList);
         window.addEventListener('beforeunload', () => {
             if (currentUser && activeBoardId) saveBoard();
@@ -1783,53 +1751,53 @@
             if (draggedColumn) e.preventDefault();
         });
 
-        onAuthStateChanged(auth, async (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            const loading = document.getElementById('loading');
-            const board = document.getElementById('board');
-            const userBar = document.getElementById('user-bar');
+        async function applyAuthenticatedState(user) {
+            currentUser = user;
+            loginScreen.style.display = 'none';
+            loadingScreen.style.display = 'flex';
 
+            const accountLabel = user.email || user.displayName || 'Unknown account';
+            userName.textContent = accountLabel;
+            userName.title = accountLabel;
+            userAvatar.src = user.photoURL || '';
+            userAvatar.style.display = user.photoURL ? 'block' : 'none';
+
+            userBar.style.display = 'flex';
+            sidebar.style.display = 'block';
+            boardStoreCache = null;
+            subscribeBoardStore();
+
+            await initializeBoards();
+            loadingScreen.style.display = 'none';
+            boardEl.style.display = 'flex';
+        }
+
+        async function applySignedOutState() {
+            await flushPendingSave();
+            unsubscribeBoardStoreListener();
+
+            currentUser = null;
+            activeBoardId = null;
+            boardList = [];
+            boardStoreCache = null;
+
+            cleanupColumns();
+            taskListNav.innerHTML = '';
+            updateBoardUserInfo();
+
+            boardEl.style.display = 'none';
+            loadingScreen.style.display = 'none';
+            userBar.style.display = 'none';
+            sidebar.style.display = 'none';
+            loginScreen.style.display = 'flex';
+        }
+
+        onAuthStateChanged(auth, async user => {
             if (user) {
-                currentUser = user;
-                loginScreen.style.display = 'none';
-                loading.style.display = 'flex';
-
-                const avatar = document.getElementById('user-avatar');
-                const accountLabel = user.email || user.displayName || 'Unknown account';
-                document.getElementById('user-name').textContent = accountLabel;
-                document.getElementById('user-name').title = `UID: ${user.uid}`;
-                uidBadge.textContent = `UID: ${user.uid}`;
-                uidBadge.title = user.uid;
-                avatar.src = user.photoURL || '';
-                avatar.style.display = user.photoURL ? 'block' : 'none';
-                userBar.style.display = 'flex';
-                sidebar.style.display = 'block';
-                boardStoreCache = null;
-                subscribeBoardStore();
-                setSyncStatus('', 'Connecting...');
-
-                await initializeBoards();
-                loading.style.display = 'none';
-                board.style.display = 'flex';
-                setSyncStatus('', 'Live sync on');
-            } else {
-                await flushPendingSave();
-                unsubscribeBoardStoreListener();
-                currentUser = null;
-                activeBoardId = null;
-                boardList = [];
-                boardStoreCache = null;
-                // Clean up columns (and their intervals) on sign-out
-                cleanupColumns();
-                taskListNav.innerHTML = '';
-                updateBoardUserInfo();
-                board.style.display = 'none';
-                userBar.style.display = 'none';
-                uidBadge.textContent = 'UID: -';
-                uidBadge.title = '';
-                sidebar.style.display = 'none';
-                loginScreen.style.display = 'flex';
+                await applyAuthenticatedState(user);
+                return;
             }
+            await applySignedOutState();
         });
     </script>
 </body>
