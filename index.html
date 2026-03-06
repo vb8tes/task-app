@@ -137,6 +137,52 @@
 
         #signout-btn:hover { background: rgba(255,255,255,0.28); }
 
+        /* ── Settings ─────────────────────────────────────────── */
+        #settings-container {
+            position: fixed;
+            top: 16px;
+            left: 20px;
+            z-index: 220;
+        }
+
+        #settings-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        #settings-btn:hover { background: rgba(255,255,255,0.28); }
+
+        #settings-panel {
+            display: none;
+            margin-top: 8px;
+            background: rgba(245, 245, 245, 0.96);
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 180px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            color: #222;
+            font-size: 14px;
+        }
+
+        #settings-panel.open { display: block; }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .settings-row label { cursor: pointer; }
+
         /* ── Title ─────────────────────────────────────────────── */
         h1 {
             position: fixed;
@@ -407,6 +453,16 @@
         <source src="Top of the hill.mp4" type="video/mp4" />
     </video>
 
+    <div id="settings-container">
+        <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
+        <div id="settings-panel">
+            <div class="settings-row">
+                <label for="animations-toggle">Animations</label>
+                <input id="animations-toggle" type="checkbox" checked />
+            </div>
+        </div>
+    </div>
+
     <!-- Login screen -->
     <div id="login-screen">
         <h2>Hey Sisyphus</h2>
@@ -467,11 +523,33 @@
         let draggedColumn = null;
         let activeDropZone = null;
         let saveTimer = null;
+        const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
         const rollbackVideo = document.getElementById('rollback-video');
         const crushedVideo = document.getElementById('crushed-video');
         const summitVideo = document.getElementById('summit-video');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const animationsToggle = document.getElementById('animations-toggle');
+        let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
+
+        function hideAllActionVideos() {
+            document.querySelectorAll('.bg-action-video').forEach(video => {
+                video.pause();
+                video.style.display = 'none';
+            });
+        }
+
+        function setAnimationsEnabled(enabled) {
+            animationsEnabled = enabled;
+            localStorage.setItem(ANIMATIONS_KEY, String(enabled));
+            animationsToggle.checked = enabled;
+            if (!enabled) hideAllActionVideos();
+        }
+
+        setAnimationsEnabled(animationsEnabled);
 
         function playActionVideo(videoToPlay) {
+            if (!animationsEnabled) return;
             document.querySelectorAll('.bg-action-video').forEach(video => {
                 if (video !== videoToPlay) {
                     video.pause();
@@ -506,6 +584,16 @@
         });
         summitVideo.addEventListener('ended', () => {
             summitVideo.style.display = 'none';
+        });
+
+        settingsBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            settingsPanel.classList.toggle('open');
+        });
+        settingsPanel.addEventListener('click', e => e.stopPropagation());
+        document.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        animationsToggle.addEventListener('change', e => {
+            setAnimationsEnabled(e.target.checked);
         });
 
         // ── Placeholder rotation ──────────────────────────────────────
