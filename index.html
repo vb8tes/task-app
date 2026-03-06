@@ -2,22 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <title>Sisyphus</title>
     <style>
+        :root {
+            --font-sans: "Montserrat", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+            --title-size: 32px;
+            --title-weight: 700;
+            --title-tracking: -0.02em;
+            --section-size: 20px;
+            --section-weight: 600;
+            --body-size: 16px;
+            --body-weight: 400;
+            --body-strong-weight: 500;
+            --meta-size: 13px;
+            --meta-color-light: rgba(255,255,255,0.62);
+            --meta-color-dark: #6b737b;
+            --surface-card-bg: rgba(246, 249, 251, 0.9);
+            --surface-card-border: rgba(30, 40, 52, 0.12);
+            --surface-card-shadow: 0 8px 22px rgba(13, 23, 34, 0.12);
+            --surface-card-radius: 16px;
+            --surface-card-padding: 16px;
+        }
+
         html, body {
             height: 100%;
             margin: 0;
         }
 
         html {
-            background: #000 url('SisyphusImage2.png') no-repeat center center fixed;
+            background: #000 url('SisyphusImage3.png') no-repeat center center fixed;
             background-size: cover;
             overflow-x: auto;
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: var(--font-sans);
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
             padding: 80px 24px 40px 68px;
             box-sizing: border-box;
             min-height: 100%;
@@ -26,6 +54,13 @@
         }
 
         body.sidebar-expanded { padding-left: 296px; }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
 
         .bg-action-video {
             position: fixed;
@@ -54,14 +89,17 @@
 
         #login-screen h2 {
             color: white;
-            font-size: 32px;
+            font-size: var(--title-size);
+            font-weight: var(--title-weight);
+            letter-spacing: var(--title-tracking);
             margin: 0 0 8px;
             text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
         }
 
         #login-screen p {
             color: rgba(255,255,255,0.75);
-            font-size: 16px;
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
             margin: 0 0 32px;
         }
 
@@ -74,11 +112,10 @@
             border: none;
             border-radius: 6px;
             padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: var(--body-size);
+            font-weight: var(--body-strong-weight);
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            font-family: Arial, sans-serif;
         }
 
         #google-signin-btn:hover {
@@ -133,7 +170,8 @@
 
         #user-name {
             color: white;
-            font-size: 13px;
+            font-size: var(--meta-size);
+            color: rgba(255,255,255,0.82);
             text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
 
@@ -142,10 +180,11 @@
             border: 1px solid rgba(255,255,255,0.4);
             color: white;
             border-radius: 4px;
-            padding: 4px 10px;
-            font-size: 12px;
+            height: 32px;
+            padding: 0 10px;
+            font-size: 13px;
+            font-weight: var(--body-strong-weight);
             cursor: pointer;
-            font-family: Arial, sans-serif;
         }
 
         #signout-btn:hover { background: rgba(255,255,255,0.28); }
@@ -163,7 +202,7 @@
             border-radius: 6px;
             width: 32px;
             height: 32px;
-            font-size: 18px;
+            font-size: 24px;
             line-height: 1;
             cursor: pointer;
             padding: 0;
@@ -176,11 +215,12 @@
             position: absolute;
             top: 40px;
             right: 0;
-            background: rgba(245, 245, 245, 0.96);
-            border-radius: 8px;
-            padding: 10px 12px;
+            background: var(--surface-card-bg);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            padding: var(--surface-card-padding);
             min-width: 180px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            box-shadow: var(--surface-card-shadow);
             color: #222;
             font-size: 14px;
         }
@@ -200,8 +240,8 @@
             margin-top: 10px;
             padding-top: 8px;
             border-top: 1px solid rgba(0,0,0,0.12);
-            font-size: 11px;
-            color: #666;
+            font-size: var(--meta-size);
+            color: #4f5965;
             text-align: right;
             letter-spacing: 0.02em;
         }
@@ -228,12 +268,12 @@
 
         #sidebar.expanded {
             width: 260px;
-            background: rgba(245, 245, 245, 0.94);
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-            padding: 10px;
+            background: #5b6370;
+            border: 1px solid #778091;
+            border-radius: var(--surface-card-radius);
+            box-shadow: 0 12px 26px rgba(6, 12, 22, 0.26);
+            padding: var(--surface-card-padding);
             overflow: hidden;
-            border: none;
             cursor: default;
         }
 
@@ -259,9 +299,15 @@
         #sidebar.expanded #sidebar-toggle {
             width: 100%;
             margin-bottom: 10px;
-            border: 1px solid #d8dde1;
-            background: #eceff1;
-            color: #333;
+            border: 1px solid #8590a3;
+            background: #6c7686;
+            color: rgba(245,249,253,0.92);
+        }
+
+        #sidebar.expanded #sidebar-toggle:hover {
+            background: rgba(106, 160, 222, 0.28);
+            border-color: rgba(146, 191, 241, 0.6);
+            color: rgba(222, 240, 255, 0.98);
         }
 
         #sidebar-content { display: none; }
@@ -273,9 +319,9 @@
         }
 
         #sidebar-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: #444;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(248, 251, 255, 0.98);
         }
 
         #task-list-nav {
@@ -288,15 +334,16 @@
 
         .task-list-item {
             width: 100%;
-            border: 1px solid #d8dde1;
-            border-radius: 6px;
-            background: white;
-            padding: 8px 10px;
+            border: 1px solid #8792a5;
+            border-radius: var(--surface-card-radius);
+            background: #6f7a8a;
+            box-shadow: 0 4px 12px rgba(6, 12, 22, 0.18);
+            padding: var(--surface-card-padding);
             text-align: left;
             cursor: grab;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
         }
 
         .task-list-head {
@@ -307,16 +354,20 @@
         }
 
         .task-list-actions {
-            display: flex;
+            display: none;
             align-items: center;
             gap: 6px;
             flex-shrink: 0;
         }
 
+        .task-list-item:hover .task-list-actions {
+            display: flex;
+        }
+
         .task-list-item.active {
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.35);
-            background: #f3fbf3;
+            border-color: #7ca8dc;
+            box-shadow: inset 2px 0 0 #93bbe8, 0 6px 14px rgba(6, 12, 22, 0.22);
+            background: #7d8ca1;
         }
 
         .task-list-item.dragging {
@@ -331,9 +382,9 @@
         }
 
         .task-list-name {
-            font-size: 13px;
-            font-weight: bold;
-            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(250, 253, 255, 0.99);
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -341,9 +392,9 @@
         }
 
         .rename-list-btn {
-            border: 1px solid #ccd1d5;
-            background: #f4f6f8;
-            color: #555;
+            border: 1px solid #8590a3;
+            background: #6b7585;
+            color: rgba(240,246,252,0.82);
             border-radius: 4px;
             font-size: 12px;
             line-height: 1;
@@ -357,14 +408,18 @@
             justify-content: center;
         }
 
-        .rename-list-btn:hover { background: #e9edf1; }
+        .rename-list-btn:hover {
+            background: rgba(106, 160, 222, 0.28);
+            color: rgba(222, 240, 255, 0.98);
+            border-color: rgba(146, 191, 241, 0.6);
+        }
 
         .delete-list-btn {
-            border: 1px solid #e0b4b4;
-            background: #fff0f0;
-            color: #a94442;
+            border: 1px solid #8590a3;
+            background: #6b7585;
+            color: rgba(240,246,252,0.82);
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 18px;
             line-height: 1;
             width: 28px;
             height: 24px;
@@ -376,31 +431,38 @@
             justify-content: center;
         }
 
-        .delete-list-btn:hover { background: #ffe3e3; }
+        .delete-list-btn:hover {
+            background: rgba(255, 95, 95, 0.22);
+            color: rgba(255, 224, 224, 0.95);
+        }
 
         #new-task-list-btn {
-            border: none;
+            border: 1px solid rgba(154, 206, 255, 0.45);
             border-radius: 6px;
             padding: 8px 10px;
-            font-size: 13px;
-            font-weight: bold;
-            background: #4CAF50;
-            color: white;
+            font-size: 14px;
+            font-weight: var(--body-strong-weight);
+            background: rgba(102, 164, 224, 0.36);
+            color: rgba(246, 251, 255, 0.98);
             cursor: pointer;
         }
 
-        #new-task-list-btn:hover { background: #43a047; }
+        #new-task-list-btn:hover {
+            background: rgba(102, 164, 224, 0.48);
+            border-color: rgba(180, 223, 255, 0.65);
+        }
 
         /* ── Title ─────────────────────────────────────────────── */
         h1 {
             position: static;
-            color: white;
+            color: rgba(245, 248, 252, 0.9);
             text-align: center;
-            font-size: 19.2px;
-            font-weight: normal;
+            font-size: 21px;
+            font-weight: 400;
             font-style: italic;
             margin: 0;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+            letter-spacing: 0.01em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.45);
             z-index: 100;
             pointer-events: none;
         }
@@ -408,8 +470,9 @@
         #current-task-list-label {
             position: static;
             color: white;
-            font-size: 30px;
-            font-weight: bold;
+            font-size: var(--title-size);
+            font-weight: 600;
+            letter-spacing: var(--title-tracking);
             text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
             justify-self: start;
             z-index: 100;
@@ -431,9 +494,11 @@
 
         /* ── Column ────────────────────────────────────────────── */
         .column {
-            background: rgba(245, 245, 245, 0.9);
-            border-radius: 8px;
-            padding: 16px;
+            background: rgba(246, 249, 251, 0.8);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            box-shadow: var(--surface-card-shadow);
+            padding: var(--surface-card-padding);
             min-width: 420px;
             width: 420px;
             flex-shrink: 0;
@@ -449,15 +514,18 @@
         .column-header {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
-            gap: 6px;
+            margin-bottom: 16px;
+            gap: 10px;
+            min-height: 34px;
         }
 
         .col-drag-handle {
             cursor: grab;
-            color: #bbb;
+            color: #96a0aa;
             font-size: 18px;
-            padding: 2px 4px;
+            width: 24px;
+            text-align: center;
+            padding: 2px 0;
             flex-shrink: 0;
             user-select: none;
             line-height: 1;
@@ -489,12 +557,11 @@
 
         .column-title {
             flex: 1;
-            font-weight: bold;
-            font-size: 15px;
+            font-weight: var(--section-weight);
+            font-size: var(--section-size);
             color: #333;
             border: none;
             background: transparent;
-            font-family: Arial, sans-serif;
             padding: 3px 5px;
             border-radius: 4px;
             cursor: pointer;
@@ -510,16 +577,27 @@
         .delete-col-btn {
             background: transparent;
             border: none;
-            color: #bbb;
+            color: #8e98a3;
             cursor: pointer;
             font-size: 16px;
-            padding: 2px 5px;
+            padding: 2px 6px;
             line-height: 1;
-            border-radius: 4px;
+            border-radius: 8px;
             flex-shrink: 0;
+            opacity: 0.45;
+            transition: opacity 0.16s ease, background 0.16s ease, color 0.16s ease;
         }
 
-        .delete-col-btn:hover { color: #e74c3c; }
+        .column:hover .delete-col-btn,
+        .delete-col-btn:focus-visible {
+            opacity: 0.88;
+        }
+
+        .delete-col-btn:hover {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            opacity: 1;
+        }
 
         /* ── Task input ────────────────────────────────────────── */
         .task-input-row {
@@ -531,18 +609,23 @@
         .task-input {
             flex: 1;
             padding: 8px;
-            font-size: 14px;
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-family: Arial, sans-serif;
             min-width: 0;
         }
 
-        .task-input::placeholder { font-style: italic; }
+        .task-input::placeholder {
+            font-style: italic;
+            color: #6f7883;
+            opacity: 1;
+        }
 
         .add-task-btn {
-            font-size: 14px;
-            background: #4CAF50;
+            font-size: 15px;
+            font-weight: var(--body-strong-weight);
+            background: #2b6ecf;
             color: white;
             border: none;
             border-radius: 4px;
@@ -551,7 +634,7 @@
             width: 90px;
         }
 
-        .add-task-btn:hover { background: #43a047; }
+        .add-task-btn:hover { background: #245fb2; }
 
         /* ── Task lists ────────────────────────────────────────── */
         .task-list,
@@ -564,26 +647,28 @@
 
         /* ── Task card ─────────────────────────────────────────── */
         .task-card {
-            background: white;
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
+            background: var(--surface-card-bg);
+            border: 1px solid var(--surface-card-border);
+            padding: 12px;
+            margin-bottom: 6px;
+            border-radius: var(--surface-card-radius);
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: grab;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 14px rgba(13, 23, 34, 0.08);
             transition: box-shadow 0.15s;
         }
 
-        .task-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        .task-card:hover { box-shadow: 0 8px 18px rgba(13, 23, 34, 0.14); }
         .task-card.dragging { opacity: 0.45; cursor: grabbing; }
-        .task-card.done span { text-decoration: line-through; color: #aaa; }
+        .task-card.done span { text-decoration: line-through; color: #7e8793; }
 
         .task-card span {
             flex: 1;
-            font-size: 14px;
-            color: #333;
+            font-size: 15px;
+            font-weight: 500;
+            color: #2d333a;
             word-break: break-word;
         }
 
@@ -591,18 +676,21 @@
         .card-buttons {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             flex-shrink: 0;
-            margin-left: 8px;
-            width: 90px;
+            margin-left: 6px;
+            width: 96px;
         }
 
         .done-btn,
         .delete-task-btn {
             width: 100%;
-            padding: 4px 0;
-            font-size: 12px;
-            font-weight: bold;
+            padding: 4px 2px;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.15;
+            letter-spacing: 0;
+            white-space: nowrap;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -610,19 +698,31 @@
             text-align: center;
         }
 
-        .done-btn { background: #2196F3; }
-        .done-btn:hover { background: #1976D2; }
+        .done-btn {
+            background: #5A738F;
+            color: #F6FAFF;
+            border: 1px solid #506985;
+        }
+        .done-btn:hover { background: #4F6781; }
         .done-btn.undo { background: #78909C; }
         .done-btn.undo:hover { background: #546E7A; }
-        .delete-task-btn { background: #e74c3c; }
-        .delete-task-btn:hover { background: #c0392b; }
+        .delete-task-btn {
+            background: #E9EEF3;
+            color: #5F6B78;
+            border: 1px solid #D5DDE6;
+        }
+        .delete-task-btn:hover {
+            background: #F4E8E8;
+            color: #9A4E4E;
+            border-color: #E3CFCF;
+        }
 
         /* ── Completed divider ─────────────────────────────────── */
         .completed-divider {
             display: none;
             align-items: center;
-            color: #666;
-            font-size: 12px;
+            color: #525b66;
+            font-size: 13px;
             margin: 16px 0 12px;
             gap: 8px;
         }
@@ -634,34 +734,36 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: #ccc;
+            background: #b5bcc5;
         }
 
         /* ── Add column button ─────────────────────────────────── */
         .add-column-btn {
-            background: rgba(245, 245, 245, 0.88);
-            border: 2px dashed #888;
-            border-radius: 8px;
+            background: rgba(246, 249, 251, 0.8);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            box-shadow: var(--surface-card-shadow);
             min-width: 200px;
             width: 200px;
             flex-shrink: 0;
             cursor: pointer;
             color: #444;
-            font-size: 15px;
-            font-weight: bold;
-            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: var(--body-strong-weight);
             text-align: center;
-            padding: 20px 0;
+            padding: var(--surface-card-padding);
             display: flex;
             align-items: center;
             justify-content: center;
             align-self: stretch;
+            transition: box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
 
         .add-column-btn:hover {
-            background: rgba(245, 245, 245, 1);
-            color: #111;
-            border-color: #555;
+            background: rgba(246, 249, 251, 0.88);
+            color: #1a2530;
+            border-color: rgba(26, 37, 48, 0.18);
+            box-shadow: 0 10px 24px rgba(13, 23, 34, 0.14);
         }
     </style>
 </head>
@@ -1277,8 +1379,8 @@
                     <span class="task-list-head">
                         <span class="task-list-name"></span>
                         <span class="task-list-actions">
-                            <button class="rename-list-btn" type="button" title="Rename task list">✎</button>
-                            <button class="delete-list-btn" type="button" title="Delete task list">🗑</button>
+                            <button class="rename-list-btn" type="button" title="Rename task list">Aa</button>
+                            <button class="delete-list-btn" type="button" title="Delete task list">×</button>
                         </span>
                     </span>
                 `;
