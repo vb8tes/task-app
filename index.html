@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net;
+        connect-src 'self'
+            https://*.googleapis.com
+            https://*.firebaseio.com
+            https://www.google.com
+            https://www.recaptcha.net;
+        img-src 'self' https://lh3.googleusercontent.com data:;
+        style-src 'self' 'unsafe-inline';
+        frame-src https://mysisyphus-xyz.firebaseapp.com https://www.google.com https://recaptcha.google.com;
+        object-src 'none';
+    ">
     <title>Sisyphus</title>
     <style>
         html, body {
@@ -184,9 +197,26 @@
         .col-drag-handle:hover { color: #888; }
         .col-drag-handle:active { cursor: grabbing; }
 
-        .column.col-dragging { opacity: 0.45; }
-        .column.col-drop-left { border-left: 3px solid #4CAF50; }
-        .column.col-drop-right { border-right: 3px solid #4CAF50; }
+        .column.col-dragging { opacity: 0.35; }
+
+        /* Drop zone lines between columns */
+        .col-drop-zone {
+            width: 8px;
+            align-self: stretch;
+            flex-shrink: 0;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.25);
+            border: 2px dashed rgba(255,255,255,0.4);
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .col-drop-zone.active {
+            width: 36px;
+            background: rgba(76, 175, 80, 0.55);
+            border-color: #4CAF50;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.7);
+        }
 
         .column-title {
             flex: 1;
@@ -367,7 +397,6 @@
     </style>
 </head>
 <body>
-
     <!-- Login screen -->
     <div id="login-screen">
         <h2>Hey Sisyphus</h2>
@@ -403,6 +432,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
         import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -417,6 +447,13 @@
         };
 
         const app = initializeApp(firebaseConfig);
+
+        // ── App Check (reCAPTCHA v3) ──────────────────────────────────
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider('6LfFSYEsAAAAALIpBV89ECmd7gCaxh_iO20Lrn6V'),
+            isTokenAutoRefreshEnabled: true
+        });
+
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
@@ -424,6 +461,7 @@
         let currentUser = null;
         let draggedCard = null;
         let draggedColumn = null;
+        let activeDropZone = null;
         let saveTimer = null;
 
         // ── Placeholder rotation ──────────────────────────────────────
@@ -474,7 +512,8 @@
                 lastIndex = index;
             }
             setRandom();
-            setInterval(setRandom, 120000);
+            // Store the interval ID so it can be cancelled when the column is deleted
+            input._intervalId = setInterval(setRandom, 120000);
             input._rotatePlaceholder = setRandom;
         }
 
@@ -506,6 +545,14 @@
 
         async function loadBoard() {
             try {
+                // Clear any existing columns first to prevent duplicates if auth callback fires again
+                document.querySelectorAll('.column').forEach(col => {
+                    col.querySelectorAll('.task-input').forEach(input => {
+                        if (input._intervalId) clearInterval(input._intervalId);
+                    });
+                    col.remove();
+                });
+
                 const snap = await getDoc(doc(db, 'users', currentUser.uid, 'board', 'data'));
                 if (snap.exists()) {
                     snap.data().columns.forEach(c => {
@@ -530,16 +577,29 @@
             const li = document.createElement('li');
             li.className = 'task-card' + (done ? ' done' : '');
             li.draggable = true;
-            li.innerHTML = `
-                <span>${text}</span>
-                <div class="card-buttons">
-                    <button class="${done ? 'done-btn undo' : 'done-btn'}"
-                        onclick="window.toggleDone(this.closest('.task-card'))">
-                        ${done ? 'It Rolled Back' : 'Summit!'}
-                    </button>
-                    <button class="delete-task-btn"
-                        onclick="window.deleteTask(this.closest('.task-card'))">Drop It</button>
-                </div>`;
+
+            // Use textContent (never innerHTML) for user-supplied text to prevent XSS
+            const span = document.createElement('span');
+            span.textContent = text;
+
+            const doneBtn = document.createElement('button');
+            doneBtn.className = done ? 'done-btn undo' : 'done-btn';
+            doneBtn.textContent = done ? 'It Rolled Back' : 'Summit!';
+            doneBtn.addEventListener('click', () => window.toggleDone(li));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-task-btn';
+            deleteBtn.textContent = 'Drop It';
+            deleteBtn.addEventListener('click', () => window.deleteTask(li));
+
+            const buttons = document.createElement('div');
+            buttons.className = 'card-buttons';
+            buttons.appendChild(doneBtn);
+            buttons.appendChild(deleteBtn);
+
+            li.appendChild(span);
+            li.appendChild(buttons);
+
             li.addEventListener('dragstart', e => {
                 draggedCard = li;
                 li.classList.add('dragging');
@@ -552,6 +612,33 @@
             return li;
         }
 
+        // ── Column drop zones ─────────────────────────────────────────
+        function makeDropZone() {
+            const zone = document.createElement('div');
+            zone.className = 'col-drop-zone';
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                document.querySelectorAll('.col-drop-zone').forEach(z => z.classList.remove('active'));
+                zone.classList.add('active');
+                activeDropZone = zone;
+            });
+            zone.addEventListener('dragleave', () => zone.classList.remove('active'));
+            zone.addEventListener('drop', e => e.preventDefault());
+            return zone;
+        }
+
+        function showDropZones() {
+            const board = document.getElementById('board');
+            const addBtn = document.getElementById('addColumnBtn');
+            board.querySelectorAll('.column').forEach(col => board.insertBefore(makeDropZone(), col));
+            board.insertBefore(makeDropZone(), addBtn);
+        }
+
+        function hideDropZones() {
+            document.querySelectorAll('.col-drop-zone').forEach(z => z.remove());
+            activeDropZone = null;
+        }
+
         function createColumnElement(id, name, tasks = [], completed = []) {
             const col = document.createElement('div');
             col.className = 'column';
@@ -559,16 +646,19 @@
             col.innerHTML = `
                 <div class="column-header">
                     <div class="col-drag-handle" title="Drag to reorder">⠿</div>
-                    <input class="column-title" type="text" value="${name}" title="Click to rename" />
+                    <input class="column-title" type="text" title="Click to rename" maxlength="100" />
                     <button class="delete-col-btn" title="Delete column">✕</button>
                 </div>
                 <div class="task-input-row">
-                    <input class="task-input" type="text" />
+                    <input class="task-input" type="text" maxlength="500" />
                     <button class="add-task-btn">Push It</button>
                 </div>
                 <ul class="task-list"></ul>
                 <div class="completed-divider">Rolled Over the Top</div>
                 <ul class="completed-list"></ul>`;
+
+            // Set column title via .value (not innerHTML) to prevent XSS from saved names
+            col.querySelector('.column-title').value = name;
 
             col.querySelector('.column-title').addEventListener('change', saveBoard);
             col.querySelector('.delete-col-btn').addEventListener('click', () => window.deleteColumn(col));
@@ -581,51 +671,40 @@
             // Column drag handle
             const handle = col.querySelector('.col-drag-handle');
             handle.addEventListener('mousedown', () => col.draggable = true);
-            handle.addEventListener('dragstart', e => {
+            handle.addEventListener('mouseup', () => col.draggable = false);
+            col.addEventListener('dragstart', e => {
+                // Ignore if this is a task card drag bubbling up
+                if (draggedCard !== null || !col.draggable) return;
                 draggedColumn = col;
-                col.classList.add('col-dragging');
+                activeDropZone = null;
                 e.dataTransfer.effectAllowed = 'move';
-                e.stopPropagation();
+                setTimeout(() => { col.classList.add('col-dragging'); showDropZones(); }, 0);
             });
             col.addEventListener('dragend', () => {
                 col.draggable = false;
                 col.classList.remove('col-dragging');
+                if (draggedColumn && activeDropZone) {
+                    const board = document.getElementById('board');
+                    const nextEl = activeDropZone.nextElementSibling;
+                    board.insertBefore(draggedColumn, nextEl || document.getElementById('addColumnBtn'));
+                    saveBoard();
+                }
                 draggedColumn = null;
-                document.querySelectorAll('.column').forEach(c => {
-                    c.classList.remove('col-drop-left', 'col-drop-right');
-                });
+                hideDropZones();
             });
 
+            // Task card drop handling on column
             col.addEventListener('dragover', e => {
                 e.preventDefault();
-                if (draggedColumn && draggedColumn !== col) {
-                    document.querySelectorAll('.column').forEach(c => c.classList.remove('col-drop-left', 'col-drop-right'));
-                    const rect = col.getBoundingClientRect();
-                    col.classList.add(e.clientX < rect.left + rect.width / 2 ? 'col-drop-left' : 'col-drop-right');
-                } else if (draggedCard) {
-                    col.classList.add('drag-over');
-                }
+                if (draggedCard) col.classList.add('drag-over');
             });
-
             col.addEventListener('dragleave', e => {
-                if (!col.contains(e.relatedTarget)) {
-                    col.classList.remove('drag-over', 'col-drop-left', 'col-drop-right');
-                }
+                if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
             });
-
             col.addEventListener('drop', e => {
                 e.preventDefault();
-                col.classList.remove('drag-over', 'col-drop-left', 'col-drop-right');
-
-                if (draggedColumn && draggedColumn !== col) {
-                    const rect = col.getBoundingClientRect();
-                    if (e.clientX < rect.left + rect.width / 2) {
-                        col.parentNode.insertBefore(draggedColumn, col);
-                    } else {
-                        col.parentNode.insertBefore(draggedColumn, col.nextSibling);
-                    }
-                    saveBoard();
-                } else if (draggedCard) {
+                col.classList.remove('drag-over');
+                if (draggedCard) {
                     const target = draggedCard.classList.contains('done')
                         ? col.querySelector('.completed-list')
                         : col.querySelector('.task-list');
@@ -647,6 +726,7 @@
             const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
+            if (text.length > 500) { alert('Task text is too long (max 500 characters).'); return; }
             col.querySelector('.task-list').prepend(createTaskCard(text, false));
             input.value = '';
             if (input._rotatePlaceholder) input._rotatePlaceholder();
@@ -677,6 +757,10 @@
                 ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
                 : 'Abandon this struggle? This cannot be undone.';
             if (!confirm(msg)) return;
+            // Clear placeholder rotation intervals before removing the column
+            col.querySelectorAll('.task-input').forEach(input => {
+                if (input._intervalId) clearInterval(input._intervalId);
+            });
             col.remove();
             saveBoard();
         };
@@ -686,6 +770,7 @@
                 const count = document.querySelectorAll('.column').length + 1;
                 name = 'Mountain ' + count;
             }
+            if (name.length > 100) name = name.slice(0, 100);
             const id = 'col-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
             const col = createColumnElement(id, name, tasks, completed);
             document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
@@ -717,11 +802,24 @@
         }
 
         document.getElementById('signout-btn').addEventListener('click', async () => {
-            document.querySelectorAll('.column').forEach(c => c.remove());
-            await signOut(auth);
+            try {
+                // Sign out first; onAuthStateChanged will handle clearing the board UI
+                await signOut(auth);
+            } catch (e) {
+                console.error('Sign out failed:', e);
+                alert('Sign out failed — please try again.');
+            }
         });
 
         document.getElementById('addColumnBtn').addEventListener('click', () => addColumn());
+
+        // Prevent snap-back when dropping column over child elements
+        document.addEventListener('dragover', e => {
+            if (draggedColumn) e.preventDefault();
+        });
+        document.addEventListener('drop', e => {
+            if (draggedColumn) e.preventDefault();
+        });
 
         onAuthStateChanged(auth, async (user) => {
             const loginScreen = document.getElementById('login-screen');
@@ -745,6 +843,13 @@
                 board.style.display = 'flex';
             } else {
                 currentUser = null;
+                // Clean up columns (and their intervals) on sign-out
+                document.querySelectorAll('.column').forEach(col => {
+                    col.querySelectorAll('.task-input').forEach(input => {
+                        if (input._intervalId) clearInterval(input._intervalId);
+                    });
+                    col.remove();
+                });
                 board.style.display = 'none';
                 userBar.style.display = 'none';
                 loginScreen.style.display = 'flex';
