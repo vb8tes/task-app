@@ -761,6 +761,7 @@
         let boardList = [];
         let boardStoreCache = null;
         let unsubscribeBoardStore = null;
+        const pendingBoardCreates = new Set();
         const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
         const GITHUB_REPO_OWNER = 'vb8tes';
         const GITHUB_REPO_NAME = 'task-app';
@@ -1110,6 +1111,23 @@
             }
         }
 
+        async function flushPendingSaveWithTimeout(timeoutMs = 1500) {
+            if (!savePromise) return;
+            let timedOut = false;
+            await Promise.race([
+                flushPendingSave(),
+                new Promise(resolve => {
+                    setTimeout(() => {
+                        timedOut = true;
+                        resolve();
+                    }, timeoutMs);
+                })
+            ]);
+            if (timedOut) {
+                console.warn('Proceeding without waiting for pending save to finish.');
+            }
+        }
+
         function cleanupColumns() {
             document.querySelectorAll('.column').forEach(col => {
                 col.querySelectorAll('.task-input').forEach(input => {
@@ -1211,6 +1229,7 @@
 
             const removedIndex = boardList.findIndex(b => b.id === boardId);
             boardList = boardList.filter(b => b.id !== boardId);
+            pendingBoardCreates.delete(boardId);
             try {
                 await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: deleteField() } }, { merge: true });
             } catch (e) {
@@ -1338,10 +1357,20 @@
                     boardStoreCache = snap.exists() ? snap.data() : {};
                     const remoteBoards = normalizeBoards(boardStoreCache.boards);
                     if (remoteBoards.length > 0) {
-                        const remoteSig = JSON.stringify(remoteBoards.map(b => ({ id: b.id, name: b.name })));
+                        const remoteIds = new Set(remoteBoards.map(b => b.id));
+                        pendingBoardCreates.forEach(id => {
+                            if (remoteIds.has(id)) pendingBoardCreates.delete(id);
+                        });
+                        const pendingLocalBoards = boardList.filter(
+                            board => pendingBoardCreates.has(board.id) && !remoteIds.has(board.id)
+                        );
+                        const effectiveBoards = pendingLocalBoards.length > 0
+                            ? [...remoteBoards, ...pendingLocalBoards]
+                            : remoteBoards;
+                        const remoteSig = JSON.stringify(effectiveBoards.map(b => ({ id: b.id, name: b.name })));
                         const localSig = JSON.stringify(boardList.map(b => ({ id: b.id, name: b.name })));
                         if (remoteSig !== localSig) {
-                            boardList = remoteBoards;
+                            boardList = effectiveBoards;
                         }
                     }
 
@@ -1403,26 +1432,39 @@
         }
 
         async function createTaskList() {
-            if (!currentUser) return;
-            await flushPendingSave();
-            const defaultColumns = createDefaultColumns();
-            const newBoard = createBoardMeta();
-            boardList.push(newBoard);
-            try {
-                await setDoc(boardStoreRef(), { columnsByBoard: { [newBoard.id]: defaultColumns } }, { merge: true });
-            } catch (e) {
-                console.warn('Could not pre-seed default columns for new task list:', e);
+            if (!currentUser) {
+                alert('Please sign in again before creating a new world.');
+                return;
             }
-            const local = readLocalStore();
-            writeLocalStore({
-                columnsByBoard: {
-                    ...(local.columnsByBoard || {}),
-                    [newBoard.id]: defaultColumns
+            newTaskListBtn.disabled = true;
+            try {
+                await flushPendingSaveWithTimeout();
+                const defaultColumns = createDefaultColumns();
+                const newBoard = createBoardMeta();
+                boardList.push(newBoard);
+                pendingBoardCreates.add(newBoard.id);
+                renderTaskListNav();
+                await loadBoard(newBoard.id);
+                try {
+                    await setDoc(boardStoreRef(), { columnsByBoard: { [newBoard.id]: defaultColumns } }, { merge: true });
+                } catch (e) {
+                    console.warn('Could not pre-seed default columns for new task list:', e);
                 }
-            });
-            await persistBoardsIndex();
-            await loadBoard(newBoard.id);
-            renderTaskListNav();
+                const local = readLocalStore();
+                writeLocalStore({
+                    columnsByBoard: {
+                        ...(local.columnsByBoard || {}),
+                        [newBoard.id]: defaultColumns
+                    }
+                });
+                await persistBoardsIndex();
+                renderTaskListNav();
+            } catch (e) {
+                console.error('Failed to create task list:', e);
+                alert('Could not create a new world right now. Please try again.');
+            } finally {
+                newTaskListBtn.disabled = false;
+            }
         }
 
         async function initializeBoards() {
@@ -1719,12 +1761,11 @@
             }
         });
 
-        // Handle redirect result when returning from Google login
-        try {
-            await getRedirectResult(auth);
-        } catch (e) {
+        // Handle redirect result when returning from Google login without
+        // blocking subsequent event listener wiring.
+        getRedirectResult(auth).catch(e => {
             console.error('Redirect result error:', e);
-        }
+        });
 
         signOutBtn.addEventListener('click', async () => {
             try {
@@ -1780,6 +1821,7 @@
             activeBoardId = null;
             boardList = [];
             boardStoreCache = null;
+            pendingBoardCreates.clear();
 
             cleanupColumns();
             taskListNav.innerHTML = '';
