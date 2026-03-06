@@ -36,6 +36,18 @@
             min-width: max-content;
         }
 
+        #rollback-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+            z-index: -1;
+            display: none;
+            pointer-events: none;
+        }
+
         /* ── Login Screen ──────────────────────────────────────── */
         #login-screen {
             position: fixed;
@@ -397,6 +409,10 @@
     </style>
 </head>
 <body>
+    <video id="rollback-video" preload="auto">
+        <source src="watermarked-02af6fc2-100b-4597-9765-d40e454f4e76.mp4" type="video/mp4" />
+    </video>
+
     <!-- Login screen -->
     <div id="login-screen">
         <h2>Hey Sisyphus</h2>
@@ -463,6 +479,20 @@
         let draggedColumn = null;
         let activeDropZone = null;
         let saveTimer = null;
+        const rollbackVideo = document.getElementById('rollback-video');
+
+        function playRollbackVideo() {
+            rollbackVideo.style.display = 'block';
+            rollbackVideo.currentTime = 0;
+            rollbackVideo.play().catch(err => {
+                console.warn('Rollback video failed to play:', err);
+                rollbackVideo.style.display = 'none';
+            });
+        }
+
+        rollbackVideo.addEventListener('ended', () => {
+            rollbackVideo.style.display = 'none';
+        });
 
         // ── Placeholder rotation ──────────────────────────────────────
         const PLACEHOLDERS = [
@@ -735,10 +765,12 @@
 
         window.toggleDone = function(card) {
             const col = card.closest('.column');
+            const wasDone = card.classList.contains('done');
             const isDone = card.classList.toggle('done');
             const btn = card.querySelector('.done-btn');
             btn.textContent = isDone ? 'It Rolled Back' : 'Summit!';
             btn.classList.toggle('undo', isDone);
+            if (wasDone) playRollbackVideo();
             col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
             updateDivider(col);
             saveBoard();
