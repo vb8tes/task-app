@@ -780,6 +780,7 @@
         const newTaskListBtn = document.getElementById('new-task-list-btn');
         const boardUserInfo = document.getElementById('board-user-info');
         const currentTaskListLabel = document.getElementById('current-task-list-label');
+        const topBar = document.getElementById('top-bar');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
 
         function isDesktopBrowser() {
@@ -877,9 +878,24 @@
             sidebar.style.top = top + 'px';
         }
 
+        function syncSidebarHorizontalPosition() {
+            // Sidebar should move with page content horizontally (not remain viewport-fixed).
+            sidebar.style.transform = `translateX(${-window.scrollX}px)`;
+        }
+
+        function syncTopBarHorizontalPosition() {
+            topBar.style.transform = `translateX(${window.scrollX}px)`;
+        }
+
         window.addEventListener('scroll', updateSidebarTopOnScroll, { passive: true });
+        window.addEventListener('scroll', syncTopBarHorizontalPosition, { passive: true });
+        window.addEventListener('scroll', syncSidebarHorizontalPosition, { passive: true });
         window.addEventListener('resize', updateSidebarTopOnScroll);
+        window.addEventListener('resize', syncTopBarHorizontalPosition);
+        window.addEventListener('resize', syncSidebarHorizontalPosition);
         updateSidebarTopOnScroll();
+        syncTopBarHorizontalPosition();
+        syncSidebarHorizontalPosition();
 
         setSidebarExpanded(sidebar.classList.contains('expanded'));
 
