@@ -1094,13 +1094,26 @@
 
         function saveBoard() {
             if (!currentUser || !activeBoardId) return;
-            savePromise = persistBoardColumns(activeBoardId, collectBoardColumns());
+            const boardId = activeBoardId;
+            const columns = collectBoardColumns();
+            const priorSave = savePromise || Promise.resolve();
+            const nextSave = priorSave
+                .catch(() => {
+                    // Keep the queue alive even if a previous save failed.
+                })
+                .then(() => persistBoardColumns(boardId, columns));
+            savePromise = nextSave.finally(() => {
+                if (savePromise === nextSave) savePromise = null;
+            });
         }
 
         async function flushPendingSave() {
-            if (!savePromise) return;
-            try { await savePromise; }
-            finally { savePromise = null; }
+            const pending = savePromise;
+            if (!pending) return;
+            try { await pending; }
+            finally {
+                if (savePromise === pending) savePromise = null;
+            }
         }
 
         function cleanupColumns() {
