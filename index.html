@@ -18,11 +18,14 @@
 
         body {
             font-family: Arial, sans-serif;
-            padding: 80px 24px 40px;
+            padding: 80px 24px 40px 68px;
             box-sizing: border-box;
             min-height: 100%;
             min-width: max-content;
+            transition: padding-left 0.2s ease;
         }
+
+        body.sidebar-expanded { padding-left: 296px; }
 
         .bg-action-video {
             position: fixed;
@@ -101,14 +104,24 @@
         }
 
         /* ── User bar ──────────────────────────────────────────── */
-        #user-bar {
-            position: fixed;
-            top: 16px;
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 20px;
             right: 20px;
+            height: 80px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #user-bar {
+            position: static;
             display: none;
             align-items: center;
             gap: 10px;
-            z-index: 200;
+            justify-self: end;
         }
 
         #user-avatar {
@@ -139,10 +152,8 @@
 
         /* ── Settings ─────────────────────────────────────────── */
         #settings-container {
-            position: fixed;
-            top: 16px;
-            left: 20px;
-            z-index: 220;
+            position: relative;
+            z-index: 1;
         }
 
         #settings-btn {
@@ -162,7 +173,9 @@
 
         #settings-panel {
             display: none;
-            margin-top: 8px;
+            position: absolute;
+            top: 40px;
+            right: 0;
             background: rgba(245, 245, 245, 0.96);
             border-radius: 8px;
             padding: 10px 12px;
@@ -183,19 +196,233 @@
 
         .settings-row label { cursor: pointer; }
 
+        /* ── Sidebar ──────────────────────────────────────────── */
+        #sidebar {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            bottom: 24px;
+            width: 32px;
+            background: rgba(245, 245, 245, 0.16);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 210;
+            padding: 8px 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            transition: width 0.2s ease;
+            display: none;
+            cursor: pointer;
+        }
+
+        #sidebar.expanded {
+            width: 260px;
+            background: rgba(245, 245, 245, 0.94);
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            padding: 10px;
+            overflow: hidden;
+            border: none;
+            cursor: default;
+        }
+
+        #sidebar-toggle {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 8px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #sidebar-toggle:hover { color: rgba(255,255,255,0.85); }
+
+        #sidebar.expanded #sidebar-toggle {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #d8dde1;
+            background: #eceff1;
+            color: #333;
+        }
+
+        #sidebar-content { display: none; }
+        #sidebar.expanded #sidebar-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 42px);
+            gap: 10px;
+        }
+
+        #sidebar-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        #task-list-nav {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .task-list-item {
+            width: 100%;
+            border: 1px solid #d8dde1;
+            border-radius: 6px;
+            background: white;
+            padding: 8px 10px;
+            text-align: left;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .task-list-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .task-list-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .task-list-item.active {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.35);
+            background: #f3fbf3;
+        }
+
+        .task-list-item.dragging {
+            opacity: 0.55;
+            cursor: grabbing;
+        }
+
+        .task-list-item.drop-target {
+            border-style: dashed;
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+
+        .task-list-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rename-list-btn {
+            border: 1px solid #ccd1d5;
+            background: #f4f6f8;
+            color: #555;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1;
+            width: 28px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rename-list-btn:hover { background: #e9edf1; }
+
+        .delete-list-btn {
+            border: 1px solid #e0b4b4;
+            background: #fff0f0;
+            color: #a94442;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1;
+            width: 28px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-list-btn:hover { background: #ffe3e3; }
+
+        #new-task-list-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        #new-task-list-btn:hover { background: #43a047; }
+
         /* ── Title ─────────────────────────────────────────────── */
         h1 {
-            position: fixed;
-            top: 20px;
-            left: 0;
-            right: 0;
+            position: static;
             color: white;
             text-align: center;
-            font-size: 24px;
+            font-size: 19.2px;
+            font-weight: normal;
+            font-style: italic;
             margin: 0;
             text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
             z-index: 100;
             pointer-events: none;
+        }
+
+        #board-user-info {
+            position: absolute;
+            top: 52px;
+            left: 0;
+            right: 0;
+            display: none;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #current-task-list-label {
+            position: static;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            justify-self: start;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        @media (max-width: 900px) {
+            #sidebar { display: none; }
+            body, body.sidebar-expanded { padding-left: 24px; }
         }
 
         /* ── Board ─────────────────────────────────────────────── */
@@ -443,25 +670,24 @@
     </style>
 </head>
 <body>
-    <video id="rollback-video" class="bg-action-video" preload="auto">
+    <video id="rollback-video" class="bg-action-video" preload="auto" muted playsinline>
         <source src="watermarked-02af6fc2-100b-4597-9765-d40e454f4e76.mp4" type="video/mp4" />
     </video>
-    <video id="crushed-video" class="bg-action-video" preload="auto">
+    <video id="crushed-video" class="bg-action-video" preload="auto" muted playsinline>
         <source src="Getting_Crushed_Video.mp4" type="video/mp4" />
     </video>
-    <video id="summit-video" class="bg-action-video" preload="auto">
+    <video id="summit-video" class="bg-action-video" preload="auto" muted playsinline>
         <source src="Top of the hill.mp4" type="video/mp4" />
     </video>
 
-    <div id="settings-container">
-        <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
-        <div id="settings-panel">
-            <div class="settings-row">
-                <label for="animations-toggle">Animations</label>
-                <input id="animations-toggle" type="checkbox" checked />
-            </div>
+    <aside id="sidebar" class="expanded">
+        <button id="sidebar-toggle" type="button" aria-label="Toggle task lists">☰</button>
+        <div id="sidebar-content">
+            <div id="sidebar-title">Task Lists</div>
+            <div id="task-list-nav"></div>
+            <button id="new-task-list-btn" type="button">+ New Task List</button>
         </div>
-    </div>
+    </aside>
 
     <!-- Login screen -->
     <div id="login-screen">
@@ -484,14 +710,27 @@
     <!-- Loading  Screen-->
     <div id="loading">Loading your board...</div>
 
-    <!-- User bar -->
-    <div id="user-bar">
-        <img id="user-avatar" src="" alt="" />
-        <span id="user-name"></span>
-        <button id="signout-btn">Sign Out</button>
+    <div id="top-bar">
+        <div id="current-task-list-label"></div>
+        <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
+        <!-- User bar -->
+        <div id="user-bar">
+            <img id="user-avatar" src="" alt="" />
+            <span id="user-name"></span>
+            <button id="signout-btn">Sign Out</button>
+            <div id="settings-container">
+                <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
+                <div id="settings-panel">
+                    <div class="settings-row">
+                        <label for="animations-toggle">Animations</label>
+                        <input id="animations-toggle" type="checkbox" checked />
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
+    <div id="board-user-info"></div>
 
     <div class="board" id="board" style="display:none">
         <button class="add-column-btn" id="addColumnBtn">+ New Struggle</button>
@@ -500,7 +739,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // ── Firebase init ─────────────────────────────────────────────
         const firebaseConfig = {
@@ -521,16 +760,34 @@
         let currentUser = null;
         let draggedCard = null;
         let draggedColumn = null;
+        let draggedTaskListId = null;
         let activeDropZone = null;
-        let saveTimer = null;
+        let savePromise = null;
+        let activeBoardId = null;
+        let boardList = [];
         const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
+        const LEGACY_BOARD_DOC_ID = 'data';
+        const DEFAULT_MOUNTAINS = ['Mountain 1', 'Mountain 2', 'Mountain 3'];
         const rollbackVideo = document.getElementById('rollback-video');
         const crushedVideo = document.getElementById('crushed-video');
         const summitVideo = document.getElementById('summit-video');
         const settingsBtn = document.getElementById('settings-btn');
         const settingsPanel = document.getElementById('settings-panel');
         const animationsToggle = document.getElementById('animations-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const taskListNav = document.getElementById('task-list-nav');
+        const newTaskListBtn = document.getElementById('new-task-list-btn');
+        const boardUserInfo = document.getElementById('board-user-info');
+        const currentTaskListLabel = document.getElementById('current-task-list-label');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
+
+        function isDesktopBrowser() {
+            const ua = navigator.userAgent || '';
+            const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+            const hasDesktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            return !isMobileUA && hasDesktopPointer;
+        }
 
         function hideAllActionVideos() {
             document.querySelectorAll('.bg-action-video').forEach(video => {
@@ -549,7 +806,7 @@
         setAnimationsEnabled(animationsEnabled);
 
         function playActionVideo(videoToPlay) {
-            if (!animationsEnabled) return;
+            if (!animationsEnabled || !isDesktopBrowser()) return;
             document.querySelectorAll('.bg-action-video').forEach(video => {
                 if (video !== videoToPlay) {
                     video.pause();
@@ -557,6 +814,8 @@
                 }
             });
             videoToPlay.style.display = 'block';
+            videoToPlay.muted = true;
+            videoToPlay.volume = 0;
             videoToPlay.currentTime = 0;
             videoToPlay.play().catch(err => {
                 console.warn('Action video failed to play:', err);
@@ -595,6 +854,34 @@
         animationsToggle.addEventListener('change', e => {
             setAnimationsEnabled(e.target.checked);
         });
+        currentTaskListLabel.addEventListener('click', async () => {
+            if (!activeBoardId) return;
+            await renameBoard(activeBoardId);
+        });
+        function setSidebarExpanded(expanded) {
+            sidebar.classList.toggle('expanded', expanded);
+            document.body.classList.toggle('sidebar-expanded', expanded);
+        }
+
+        sidebarToggle.addEventListener('click', e => {
+            e.stopPropagation();
+            setSidebarExpanded(!sidebar.classList.contains('expanded'));
+        });
+        sidebar.addEventListener('click', () => {
+            if (!sidebar.classList.contains('expanded')) setSidebarExpanded(true);
+        });
+
+        function updateSidebarTopOnScroll() {
+            // Start aligned with the column area (80px), then grow upward as the page scrolls.
+            const top = Math.max(24, 80 - window.scrollY);
+            sidebar.style.top = top + 'px';
+        }
+
+        window.addEventListener('scroll', updateSidebarTopOnScroll, { passive: true });
+        window.addEventListener('resize', updateSidebarTopOnScroll);
+        updateSidebarTopOnScroll();
+
+        setSidebarExpanded(sidebar.classList.contains('expanded'));
 
         // ── Placeholder rotation ──────────────────────────────────────
         const PLACEHOLDERS = [
@@ -650,52 +937,390 @@
         }
 
         // ── Firestore save / load ─────────────────────────────────────
-        function saveBoard() {
-            if (!currentUser) return;
-            if (saveTimer) clearTimeout(saveTimer);
-            saveTimer = setTimeout(async () => {
-                const columns = [];
-                document.querySelectorAll('.column').forEach(col => {
-                    const tasks = [];
-                    const completed = [];
-                    col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
-                    col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
-                    columns.push({
-                        id: col.dataset.id,
-                        name: col.querySelector('.column-title').value,
-                        tasks,
-                        completed
-                    });
-                });
-                try {
-                    await setDoc(doc(db, 'users', currentUser.uid, 'board', 'data'), { columns });
-                } catch (e) {
-                    console.error('Save failed:', e);
-                }
-            }, 500);
+        function boardStoreRef() {
+            return doc(db, 'users', currentUser.uid, 'board', LEGACY_BOARD_DOC_ID);
         }
 
-        async function loadBoard() {
-            try {
-                // Clear any existing columns first to prevent duplicates if auth callback fires again
-                document.querySelectorAll('.column').forEach(col => {
-                    col.querySelectorAll('.task-input').forEach(input => {
-                        if (input._intervalId) clearInterval(input._intervalId);
-                    });
-                    col.remove();
-                });
+        function localStoreKey() {
+            return currentUser
+                ? `sisyphus_board_store_${currentUser.uid}`
+                : 'sisyphus_board_store_guest';
+        }
 
-                const snap = await getDoc(doc(db, 'users', currentUser.uid, 'board', 'data'));
-                if (snap.exists()) {
-                    snap.data().columns.forEach(c => {
+        function readLocalStore() {
+            try {
+                const raw = localStorage.getItem(localStoreKey());
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function writeLocalStore(patch) {
+            try {
+                const current = readLocalStore();
+                localStorage.setItem(localStoreKey(), JSON.stringify({ ...current, ...patch }));
+            } catch {
+                // Ignore localStorage failures.
+            }
+        }
+
+        function boardsIndexRef() {
+            return boardStoreRef();
+        }
+
+        function boardRef(boardId) {
+            return boardStoreRef();
+        }
+
+        function collectBoardColumns() {
+            const columns = [];
+            document.querySelectorAll('.column').forEach(col => {
+                const tasks = [];
+                const completed = [];
+                col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
+                col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
+                columns.push({
+                    id: col.dataset.id,
+                    name: col.querySelector('.column-title').value,
+                    tasks,
+                    completed
+                });
+            });
+            return columns;
+        }
+
+        async function persistBoardColumns(boardId, columns) {
+            if (!currentUser || !boardId) return;
+            const local = readLocalStore();
+            writeLocalStore({
+                columnsByBoard: { ...(local.columnsByBoard || {}), [boardId]: columns }
+            });
+            try {
+                await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: columns } }, { merge: true });
+            } catch (e) {
+                console.error('Save failed:', e);
+            }
+        }
+
+        function saveBoard() {
+            if (!currentUser || !activeBoardId) return;
+            savePromise = persistBoardColumns(activeBoardId, collectBoardColumns());
+        }
+
+        async function flushPendingSave() {
+            if (!savePromise) return;
+            try { await savePromise; }
+            finally { savePromise = null; }
+        }
+
+        function cleanupColumns() {
+            document.querySelectorAll('.column').forEach(col => {
+                col.querySelectorAll('.task-input').forEach(input => {
+                    if (input._intervalId) clearInterval(input._intervalId);
+                });
+                col.remove();
+            });
+        }
+
+        function randomItem(items) {
+            return items[Math.floor(Math.random() * items.length)];
+        }
+
+        function createDefaultColumns() {
+            return DEFAULT_MOUNTAINS.map(name => ({
+                id: 'col-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                name,
+                tasks: [],
+                completed: []
+            }));
+        }
+
+        function generateBoardProfile() {
+            const aliases = ['Atlas', 'Nyx', 'Orion', 'Echo', 'Helios', 'Gaia', 'Astra', 'Rhea'];
+            const roles = ['Stone Pusher', 'Slope Runner', 'Peak Chaser', 'Path Climber', 'Summit Seeker'];
+            const tag = Math.random().toString(36).slice(2, 6).toUpperCase();
+            return {
+                alias: randomItem(aliases),
+                role: randomItem(roles),
+                tag
+            };
+        }
+
+        function nextTaskListName() {
+            const nextNum = boardList.length + 1;
+            return `Gaia ${nextNum}`;
+        }
+
+        async function persistBoardsIndex() {
+            if (!currentUser) return;
+            writeLocalStore({ boards: boardList });
+            try {
+                await setDoc(boardsIndexRef(), { boards: boardList }, { merge: true });
+            } catch (e) {
+                console.error('Saving board index failed:', e);
+            }
+        }
+
+        function findActiveBoardMeta() {
+            return boardList.find(b => b.id === activeBoardId) || null;
+        }
+
+        async function renameBoard(boardId) {
+            const board = boardList.find(b => b.id === boardId);
+            if (!board) return;
+            const proposed = prompt('Rename task list:', board.name || '');
+            if (proposed === null) return;
+            const name = proposed.trim();
+            if (!name) {
+                alert('Task list name cannot be empty.');
+                return;
+            }
+            board.name = name.slice(0, 100);
+            await persistBoardsIndex();
+            renderTaskListNav();
+        }
+
+        async function reorderBoardList(draggedId, targetId) {
+            if (!draggedId || !targetId || draggedId === targetId) return;
+            const fromIndex = boardList.findIndex(b => b.id === draggedId);
+            const toIndex = boardList.findIndex(b => b.id === targetId);
+            if (fromIndex === -1 || toIndex === -1) return;
+            const [moved] = boardList.splice(fromIndex, 1);
+            const insertIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+            boardList.splice(insertIndex, 0, moved);
+            await persistBoardsIndex();
+            renderTaskListNav();
+        }
+
+        async function deleteBoardList(boardId) {
+            const board = boardList.find(b => b.id === boardId);
+            if (!board) return;
+            if (boardList.length <= 1) {
+                alert('You need at least one task list. Create another before deleting this one.');
+                return;
+            }
+            const confirmed = confirm(
+                `Delete "${board.name}"? This action cannot be undone.`
+            );
+            if (!confirmed) return;
+
+            const removedIndex = boardList.findIndex(b => b.id === boardId);
+            boardList = boardList.filter(b => b.id !== boardId);
+            try {
+                await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: deleteField() } }, { merge: true });
+            } catch (e) {
+                console.warn('Could not delete task list document:', e);
+            }
+            const local = readLocalStore();
+            if (local.columnsByBoard && typeof local.columnsByBoard === 'object') {
+                delete local.columnsByBoard[boardId];
+                writeLocalStore({ columnsByBoard: local.columnsByBoard });
+            }
+            await persistBoardsIndex();
+
+            if (activeBoardId === boardId) {
+                const fallbackIndex = Math.max(0, removedIndex - 1);
+                const fallbackBoard = boardList[fallbackIndex] || boardList[0];
+                if (fallbackBoard) await loadBoard(fallbackBoard.id);
+            }
+            renderTaskListNav();
+        }
+
+        function updateBoardUserInfo() {
+            const activeBoard = findActiveBoardMeta();
+            if (!activeBoard) {
+                boardUserInfo.textContent = '';
+                currentTaskListLabel.textContent = '';
+                currentTaskListLabel.title = '';
+                return;
+            }
+            const profile = activeBoard.profile || {};
+            const alias = profile.alias || 'Sisyphus';
+            const role = profile.role || 'Stone Pusher';
+            const tag = profile.tag || '0000';
+            boardUserInfo.textContent = `${activeBoard.name} • ${alias} (${role} #${tag})`;
+            currentTaskListLabel.textContent = activeBoard.name || '';
+            currentTaskListLabel.title = 'Click to rename task list';
+        }
+
+        function renderTaskListNav() {
+            taskListNav.innerHTML = '';
+            boardList.forEach(board => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'task-list-item' + (board.id === activeBoardId ? ' active' : '');
+                item.draggable = true;
+                item.dataset.boardId = board.id;
+                item.innerHTML = `
+                    <span class="task-list-head">
+                        <span class="task-list-name"></span>
+                        <span class="task-list-actions">
+                            <button class="rename-list-btn" type="button" title="Rename task list">✎</button>
+                            <button class="delete-list-btn" type="button" title="Delete task list">🗑</button>
+                        </span>
+                    </span>
+                `;
+                item.querySelector('.task-list-name').textContent = board.name || 'Gaia';
+                item.querySelector('.rename-list-btn').addEventListener('click', async e => {
+                    e.stopPropagation();
+                    await renameBoard(board.id);
+                });
+                item.querySelector('.delete-list-btn').addEventListener('click', async e => {
+                    e.stopPropagation();
+                    await deleteBoardList(board.id);
+                });
+                item.addEventListener('dragstart', e => {
+                    draggedTaskListId = board.id;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', board.id);
+                });
+                item.addEventListener('dragend', () => {
+                    draggedTaskListId = null;
+                    item.classList.remove('dragging');
+                    taskListNav.querySelectorAll('.task-list-item').forEach(el => el.classList.remove('drop-target'));
+                });
+                item.addEventListener('dragover', e => {
+                    if (!draggedTaskListId || draggedTaskListId === board.id) return;
+                    e.preventDefault();
+                    taskListNav.querySelectorAll('.task-list-item').forEach(el => el.classList.remove('drop-target'));
+                    item.classList.add('drop-target');
+                });
+                item.addEventListener('dragleave', () => {
+                    item.classList.remove('drop-target');
+                });
+                item.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    item.classList.remove('drop-target');
+                    if (!draggedTaskListId || draggedTaskListId === board.id) return;
+                    await reorderBoardList(draggedTaskListId, board.id);
+                });
+                item.addEventListener('click', async () => {
+                    if (board.id === activeBoardId) return;
+                    await switchToBoard(board.id);
+                });
+                taskListNav.appendChild(item);
+            });
+            updateBoardUserInfo();
+        }
+
+        async function loadBoard(boardId) {
+            cleanupColumns();
+            activeBoardId = boardId;
+            try {
+                const snap = await getDoc(boardStoreRef());
+                const data = snap.exists() ? snap.data() : {};
+                const local = readLocalStore();
+                const columnsByBoard = data.columnsByBoard || local.columnsByBoard || {};
+                const columns = columnsByBoard[boardId];
+                if (Array.isArray(columns) && columns.length > 0) {
+                    columns.forEach(c => {
                         const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
                         document.getElementById('board').insertBefore(col, document.getElementById('addColumnBtn'));
                     });
                 } else {
-                    ['Mountain 1', 'Mountain 2', 'Mountain 3'].forEach(name => addColumn(name));
+                    DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
                 }
             } catch (e) {
                 console.error('Load failed:', e);
+                DEFAULT_MOUNTAINS.forEach(name => addColumn(name));
+            }
+        }
+
+        async function switchToBoard(boardId) {
+            if (!currentUser || !boardId) return;
+            await flushPendingSave();
+            await loadBoard(boardId);
+            renderTaskListNav();
+        }
+
+        async function createTaskList() {
+            if (!currentUser) return;
+            await flushPendingSave();
+            const defaultColumns = createDefaultColumns();
+            const newBoard = {
+                id: 'board-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                name: nextTaskListName(),
+                profile: generateBoardProfile()
+            };
+            boardList.push(newBoard);
+            try {
+                await setDoc(boardStoreRef(), { columnsByBoard: { [newBoard.id]: defaultColumns } }, { merge: true });
+            } catch (e) {
+                console.warn('Could not pre-seed default columns for new task list:', e);
+            }
+            const local = readLocalStore();
+            writeLocalStore({
+                columnsByBoard: {
+                    ...(local.columnsByBoard || {}),
+                    [newBoard.id]: defaultColumns
+                }
+            });
+            await persistBoardsIndex();
+            await loadBoard(newBoard.id);
+            renderTaskListNav();
+        }
+
+        async function initializeBoards() {
+            try {
+                const indexSnap = await getDoc(boardsIndexRef());
+                const data = indexSnap.exists() ? indexSnap.data() : {};
+                const local = readLocalStore();
+                const boardsSource = Array.isArray(data.boards) && data.boards.length > 0
+                    ? data.boards
+                    : (Array.isArray(local.boards) ? local.boards : null);
+                if (boardsSource && boardsSource.length > 0) {
+                    boardList = boardsSource.map(board => ({
+                        id: board.id,
+                        name: board.name || 'Gaia',
+                        profile: board.profile || generateBoardProfile()
+                    }));
+                } else {
+                    // Migration path: if legacy single-board data exists, seed Gaia 1 from it.
+                    const seededColumns = Array.isArray(data.columns)
+                        ? data.columns
+                        : createDefaultColumns();
+                    boardList = [{
+                        id: 'board-' + Date.now(),
+                        name: 'Gaia 1',
+                        profile: generateBoardProfile()
+                    }];
+                    try {
+                        await setDoc(
+                            boardStoreRef(),
+                            { columnsByBoard: { [boardList[0].id]: seededColumns } },
+                            { merge: true }
+                        );
+                    } catch (e) {
+                        console.warn('Could not pre-seed first task list:', e);
+                    }
+                    writeLocalStore({
+                        boards: boardList,
+                        columnsByBoard: { [boardList[0].id]: seededColumns }
+                    });
+                    await persistBoardsIndex();
+                }
+
+                const preferredBoard = activeBoardId && boardList.some(b => b.id === activeBoardId)
+                    ? activeBoardId
+                    : boardList[0].id;
+                await loadBoard(preferredBoard);
+                renderTaskListNav();
+            } catch (e) {
+                console.error('Board initialization failed:', e);
+                // Ensure first-time users always land on Gaia 1, even if remote init fails.
+                if (!boardList.length) {
+                    boardList = [{
+                        id: 'board-' + Date.now(),
+                        name: 'Gaia 1',
+                        profile: generateBoardProfile()
+                    }];
+                }
+                await loadBoard(boardList[0].id);
+                renderTaskListNav();
             }
         }
 
@@ -947,6 +1572,7 @@
 
         document.getElementById('signout-btn').addEventListener('click', async () => {
             try {
+                await flushPendingSave();
                 // Sign out first; onAuthStateChanged will handle clearing the board UI
                 await signOut(auth);
             } catch (e) {
@@ -956,6 +1582,7 @@
         });
 
         document.getElementById('addColumnBtn').addEventListener('click', () => addColumn());
+        newTaskListBtn.addEventListener('click', createTaskList);
 
         // Prevent snap-back when dropping column over child elements
         document.addEventListener('dragover', e => {
@@ -981,21 +1608,23 @@
                 avatar.src = user.photoURL || '';
                 avatar.style.display = user.photoURL ? 'block' : 'none';
                 userBar.style.display = 'flex';
+                sidebar.style.display = 'block';
 
-                await loadBoard();
+                await initializeBoards();
                 loading.style.display = 'none';
                 board.style.display = 'flex';
             } else {
+                await flushPendingSave();
                 currentUser = null;
+                activeBoardId = null;
+                boardList = [];
                 // Clean up columns (and their intervals) on sign-out
-                document.querySelectorAll('.column').forEach(col => {
-                    col.querySelectorAll('.task-input').forEach(input => {
-                        if (input._intervalId) clearInterval(input._intervalId);
-                    });
-                    col.remove();
-                });
+                cleanupColumns();
+                taskListNav.innerHTML = '';
+                updateBoardUserInfo();
                 board.style.display = 'none';
                 userBar.style.display = 'none';
+                sidebar.style.display = 'none';
                 loginScreen.style.display = 'flex';
             }
         });
