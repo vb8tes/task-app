@@ -24,7 +24,7 @@
             min-width: max-content;
         }
 
-        #rollback-video {
+        .bg-action-video {
             position: fixed;
             inset: 0;
             width: 100vw;
@@ -397,8 +397,14 @@
     </style>
 </head>
 <body>
-    <video id="rollback-video" preload="auto">
+    <video id="rollback-video" class="bg-action-video" preload="auto">
         <source src="watermarked-02af6fc2-100b-4597-9765-d40e454f4e76.mp4" type="video/mp4" />
+    </video>
+    <video id="crushed-video" class="bg-action-video" preload="auto">
+        <source src="Getting_Crushed_Video.mp4" type="video/mp4" />
+    </video>
+    <video id="summit-video" class="bg-action-video" preload="auto">
+        <source src="Top of the hill.mp4" type="video/mp4" />
     </video>
 
     <!-- Login screen -->
@@ -462,18 +468,44 @@
         let activeDropZone = null;
         let saveTimer = null;
         const rollbackVideo = document.getElementById('rollback-video');
+        const crushedVideo = document.getElementById('crushed-video');
+        const summitVideo = document.getElementById('summit-video');
+
+        function playActionVideo(videoToPlay) {
+            document.querySelectorAll('.bg-action-video').forEach(video => {
+                if (video !== videoToPlay) {
+                    video.pause();
+                    video.style.display = 'none';
+                }
+            });
+            videoToPlay.style.display = 'block';
+            videoToPlay.currentTime = 0;
+            videoToPlay.play().catch(err => {
+                console.warn('Action video failed to play:', err);
+                videoToPlay.style.display = 'none';
+            });
+        }
 
         function playRollbackVideo() {
-            rollbackVideo.style.display = 'block';
-            rollbackVideo.currentTime = 0;
-            rollbackVideo.play().catch(err => {
-                console.warn('Rollback video failed to play:', err);
-                rollbackVideo.style.display = 'none';
-            });
+            playActionVideo(rollbackVideo);
+        }
+
+        function playCrushedVideo() {
+            playActionVideo(crushedVideo);
+        }
+
+        function playSummitVideo() {
+            playActionVideo(summitVideo);
         }
 
         rollbackVideo.addEventListener('ended', () => {
             rollbackVideo.style.display = 'none';
+        });
+        crushedVideo.addEventListener('ended', () => {
+            crushedVideo.style.display = 'none';
+        });
+        summitVideo.addEventListener('ended', () => {
+            summitVideo.style.display = 'none';
         });
 
         // ── Placeholder rotation ──────────────────────────────────────
@@ -753,6 +785,7 @@
             btn.textContent = isDone ? 'It Rolled Back' : 'Summit!';
             btn.classList.toggle('undo', isDone);
             if (wasDone) playRollbackVideo();
+            else playSummitVideo();
             col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
             updateDivider(col);
             saveBoard();
@@ -760,6 +793,7 @@
 
         window.deleteTask = function(card) {
             const col = card.closest('.column');
+            playCrushedVideo();
             card.remove();
             updateDivider(col);
             saveBoard();
