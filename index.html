@@ -161,6 +161,19 @@
             color: #ffcdd2;
         }
 
+        #uid-badge {
+            font-size: 11px;
+            border-radius: 999px;
+            padding: 3px 8px;
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(0,0,0,0.25);
+            color: rgba(255,255,255,0.88);
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         #signout-btn {
             background: rgba(255,255,255,0.15);
             border: 1px solid rgba(255,255,255,0.4);
@@ -742,6 +755,7 @@
             <img id="user-avatar" src="" alt="" />
             <span id="user-name"></span>
             <span id="sync-status">Sync idle</span>
+            <span id="uid-badge">UID: -</span>
             <button id="signout-btn">Sign Out</button>
             <div id="settings-container">
                 <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
@@ -810,6 +824,7 @@
         const currentTaskListLabel = document.getElementById('current-task-list-label');
         const topBar = document.getElementById('top-bar');
         const syncStatus = document.getElementById('sync-status');
+        const uidBadge = document.getElementById('uid-badge');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
 
         function setSyncStatus(state, text, autoClearMs = 0) {
@@ -1770,6 +1785,8 @@
                 const accountLabel = user.email || user.displayName || 'Unknown account';
                 document.getElementById('user-name').textContent = accountLabel;
                 document.getElementById('user-name').title = `UID: ${user.uid}`;
+                uidBadge.textContent = `UID: ${user.uid}`;
+                uidBadge.title = user.uid;
                 avatar.src = user.photoURL || '';
                 avatar.style.display = user.photoURL ? 'block' : 'none';
                 userBar.style.display = 'flex';
@@ -1795,6 +1812,8 @@
                 updateBoardUserInfo();
                 board.style.display = 'none';
                 userBar.style.display = 'none';
+                uidBadge.textContent = 'UID: -';
+                uidBadge.title = '';
                 sidebar.style.display = 'none';
                 loginScreen.style.display = 'flex';
             }
