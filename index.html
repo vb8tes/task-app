@@ -329,11 +329,12 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 0;
         }
 
         .task-list-item {
             width: 100%;
+            box-sizing: border-box;
             border: 1px solid #8792a5;
             border-radius: var(--surface-card-radius);
             background: #6f7a8a;
@@ -344,6 +345,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            margin: 3px 0;
         }
 
         .task-list-head {
@@ -351,6 +353,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
+            min-width: 0;
         }
 
         .task-list-actions {
@@ -375,10 +378,30 @@
             cursor: grabbing;
         }
 
-        .task-list-item.drop-target {
-            border-style: dashed;
-            border-color: #4CAF50;
-            background: #f0f8f0;
+        .task-list-drop-zone {
+            height: 0;
+            margin: 0;
+            border-radius: 8px;
+            border: 1px dashed transparent;
+            background: transparent;
+            opacity: 0;
+            pointer-events: none;
+            transition: height 0.12s ease, margin 0.12s ease, opacity 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+        }
+
+        #task-list-nav.task-list-dragging .task-list-drop-zone {
+            height: 12px;
+            margin: 2px 0;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .task-list-drop-zone.active {
+            height: 22px;
+            margin: 4px 0;
+            border-color: rgba(146, 191, 241, 0.9);
+            background: rgba(126, 169, 218, 0.38);
+            box-shadow: inset 0 0 0 1px rgba(170, 208, 249, 0.65);
         }
 
         .task-list-name {
@@ -662,6 +685,7 @@
 
         .task-card:hover { box-shadow: 0 8px 18px rgba(13, 23, 34, 0.14); }
         .task-card.dragging { opacity: 0.45; cursor: grabbing; }
+        .task-card.editing { cursor: default; }
         .task-card.done span { text-decoration: line-through; color: #7e8793; }
 
         .task-card span {
@@ -670,6 +694,15 @@
             font-weight: 500;
             color: #2d333a;
             word-break: break-word;
+            cursor: text;
+        }
+
+        .task-card span[contenteditable="true"] {
+            outline: 2px solid rgba(84, 126, 173, 0.45);
+            border-radius: 6px;
+            padding: 2px 4px;
+            background: rgba(255,255,255,0.78);
+            text-decoration: none;
         }
 
         /* ── Card buttons ──────────────────────────────────────── */
@@ -765,6 +798,98 @@
             border-color: rgba(26, 37, 48, 0.18);
             box-shadow: 0 10px 24px rgba(13, 23, 34, 0.14);
         }
+
+        /* ── Modal ─────────────────────────────────────────────── */
+        #modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            min-width: 100vw;
+        }
+
+        .modal-card {
+            background: #4e5a6b;
+            border: 1px solid #6b7a8e;
+            border-radius: var(--surface-card-radius);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+            padding: 28px 28px 24px;
+            width: 380px;
+            max-width: calc(100vw - 48px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(245, 250, 255, 0.97);
+            letter-spacing: -0.01em;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            color: rgba(220, 232, 245, 0.82);
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: rgba(245, 250, 255, 0.97);
+            font-size: 15px;
+            font-weight: 500;
+            padding: 9px 12px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .modal-input::placeholder {
+            color: rgba(190, 210, 230, 0.5);
+            font-style: italic;
+        }
+
+        .modal-input:focus {
+            border-color: rgba(120, 175, 235, 0.65);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .modal-btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            line-height: 1.2;
+            transition: background 0.15s ease;
+        }
+
+        .modal-btn-primary { background: #2b6ecf; color: white; }
+        .modal-btn-primary:hover { background: #245fb2; }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(220, 232, 245, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+        }
+        .modal-btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .modal-btn-danger { background: #c0392b; color: white; }
+        .modal-btn-danger:hover { background: #a93226; }
     </style>
 </head>
 <body>
@@ -786,6 +911,16 @@
             <button id="new-task-list-btn" type="button">+ New World</button>
         </div>
     </aside>
+
+    <!-- Custom modal -->
+    <div id="modal-overlay" role="dialog" aria-modal="true" style="display:none">
+        <div class="modal-card">
+            <div class="modal-title" id="modal-title"></div>
+            <div class="modal-body" id="modal-body"></div>
+            <input class="modal-input" id="modal-input" type="text" maxlength="200" />
+            <div class="modal-actions" id="modal-actions"></div>
+        </div>
+    </div>
 
     <!-- Login screen -->
     <div id="login-screen">
@@ -895,6 +1030,71 @@
         const currentTaskListLabel = document.getElementById('current-task-list-label');
         const topBar = document.getElementById('top-bar');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
+
+        // ── Custom modal ──────────────────────────────────────────────
+        // type: 'alert' | 'confirm' | 'prompt'
+        // Returns: undefined (alert), boolean (confirm), string|null (prompt)
+        function showModal({ title = '', message = '', type = 'alert', defaultValue = '', placeholder = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false } = {}) {
+            return new Promise(resolve => {
+                const overlay   = document.getElementById('modal-overlay');
+                const titleEl   = document.getElementById('modal-title');
+                const bodyEl    = document.getElementById('modal-body');
+                const inputEl   = document.getElementById('modal-input');
+                const actionsEl = document.getElementById('modal-actions');
+
+                titleEl.textContent      = title;
+                bodyEl.textContent       = message;
+                bodyEl.style.display     = message ? '' : 'none';
+                actionsEl.innerHTML      = '';
+
+                if (type === 'prompt') {
+                    inputEl.style.display = '';
+                    inputEl.value         = defaultValue;
+                    inputEl.placeholder   = placeholder || '';
+                } else {
+                    inputEl.style.display = 'none';
+                }
+
+                overlay.style.display = 'flex';
+                if (type === 'prompt') requestAnimationFrame(() => { inputEl.focus(); inputEl.select(); });
+
+                function close(result) {
+                    overlay.style.display = 'none';
+                    document.removeEventListener('keydown', escHandler);
+                    resolve(result);
+                }
+
+                function escHandler(e) {
+                    if (e.key !== 'Escape') return;
+                    close(type === 'prompt' ? null : type === 'confirm' ? false : undefined);
+                }
+                document.addEventListener('keydown', escHandler);
+
+                if (type !== 'alert') {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className   = 'modal-btn modal-btn-secondary';
+                    cancelBtn.textContent = cancelLabel;
+                    cancelBtn.addEventListener('click', () => close(type === 'confirm' ? false : null));
+                    actionsEl.appendChild(cancelBtn);
+                }
+
+                const confirmBtn = document.createElement('button');
+                confirmBtn.className   = 'modal-btn ' + (danger ? 'modal-btn-danger' : 'modal-btn-primary');
+                confirmBtn.textContent = type === 'alert' ? 'OK' : confirmLabel;
+                confirmBtn.addEventListener('click', () => {
+                    if (type === 'prompt') close(inputEl.value);
+                    else if (type === 'confirm') close(true);
+                    else close(undefined);
+                });
+                actionsEl.appendChild(confirmBtn);
+
+                if (type === 'prompt') {
+                    inputEl.addEventListener('keydown', function handler(e) {
+                        if (e.key === 'Enter') { inputEl.removeEventListener('keydown', handler); confirmBtn.click(); }
+                    });
+                }
+            });
+        }
 
         function isDesktopBrowser() {
             const ua = navigator.userAgent || '';
@@ -1152,6 +1352,56 @@
             }
         }
 
+        function normalizeUpdatedAt(value) {
+            const asNumber = Number(value);
+            return Number.isFinite(asNumber) && asNumber > 0 ? asNumber : 0;
+        }
+
+        function readColumnsByBoardMap(storeData) {
+            const map = storeData && typeof storeData === 'object' ? storeData.columnsByBoard : null;
+            return map && typeof map === 'object' ? map : {};
+        }
+
+        function readColumnsMetaByBoardMap(storeData) {
+            const map = storeData && typeof storeData === 'object' ? storeData.columnsMetaByBoard : null;
+            return map && typeof map === 'object' ? map : {};
+        }
+
+        function readBoardState(storeData, boardId) {
+            const columnsByBoard = readColumnsByBoardMap(storeData);
+            const columnsMetaByBoard = readColumnsMetaByBoardMap(storeData);
+            const rawMeta = columnsMetaByBoard[boardId];
+            return {
+                columns: columnsByBoard[boardId],
+                meta: {
+                    updatedAt: normalizeUpdatedAt(rawMeta && rawMeta.updatedAt),
+                    dirty: !!(rawMeta && rawMeta.dirty)
+                }
+            };
+        }
+
+        function shouldPreferLocalColumns(localState, remoteState) {
+            if (!Array.isArray(localState.columns)) return false;
+            if (!Array.isArray(remoteState.columns)) return true;
+            if (localState.meta.dirty && localState.meta.updatedAt >= remoteState.meta.updatedAt) return true;
+            return localState.meta.updatedAt > remoteState.meta.updatedAt;
+        }
+
+        function queueDirtyLocalBoardsForSync(remoteData = boardStoreCache || {}) {
+            if (!currentUser || !Array.isArray(boardList) || boardList.length === 0) return;
+            const localSnapshot = readLocalStore();
+            for (const board of boardList) {
+                const boardId = board && board.id;
+                if (!boardId) continue;
+                const localState = readBoardState(localSnapshot, boardId);
+                if (!localState.meta.dirty || !Array.isArray(localState.columns)) continue;
+                const remoteState = readBoardState(remoteData, boardId);
+                if (shouldPreferLocalColumns(localState, remoteState)) {
+                    commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                }
+            }
+        }
+
         async function getBoardStoreData() {
             if (boardStoreCache) return boardStoreCache;
             const snap = await getDoc(boardStoreRef());
@@ -1176,35 +1426,103 @@
             return columns;
         }
 
-        async function persistBoardColumns(boardId, columns) {
-            if (!currentUser || !boardId) return;
+        function persistLocalBoardColumns(boardId, columns, options = {}) {
+            if (!boardId || !Array.isArray(columns)) return 0;
+            const updatedAt = normalizeUpdatedAt(options.updatedAt) || Date.now();
+            const dirty = options.dirty !== false;
             const local = readLocalStore();
             writeLocalStore({
-                columnsByBoard: { ...(local.columnsByBoard || {}), [boardId]: columns }
+                columnsByBoard: { ...(local.columnsByBoard || {}), [boardId]: columns },
+                columnsMetaByBoard: {
+                    ...(local.columnsMetaByBoard || {}),
+                    [boardId]: { updatedAt, dirty }
+                }
             });
+            return updatedAt;
+        }
+
+        function markLocalBoardCleanIfCurrent(boardId, updatedAt) {
+            if (!boardId) return;
+            const expected = normalizeUpdatedAt(updatedAt);
+            if (!expected) return;
+            const local = readLocalStore();
+            const columnsMetaByBoard = { ...(local.columnsMetaByBoard || {}) };
+            const rawMeta = columnsMetaByBoard[boardId];
+            if (!rawMeta) return;
+            if (normalizeUpdatedAt(rawMeta.updatedAt) !== expected) return;
+            columnsMetaByBoard[boardId] = {
+                ...rawMeta,
+                updatedAt: expected,
+                dirty: false
+            };
+            writeLocalStore({ columnsMetaByBoard });
+        }
+
+        async function persistBoardColumns(boardId, columns, updatedAt) {
+            if (!currentUser || !boardId) return;
+            const version = normalizeUpdatedAt(updatedAt) || Date.now();
             try {
-                await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: columns } }, { merge: true });
+                await setDoc(
+                    boardStoreRef(),
+                    {
+                        columnsByBoard: { [boardId]: columns },
+                        columnsMetaByBoard: { [boardId]: { updatedAt: version } }
+                    },
+                    { merge: true }
+                );
+                markLocalBoardCleanIfCurrent(boardId, version);
             } catch (e) {
                 console.error('Save failed:', e);
             }
         }
 
-        function saveBoard() {
-            if (!currentUser || !activeBoardId) return;
-            const boardId = activeBoardId;
-            const columns = collectBoardColumns();
+        // ── Save queue + debounce ─────────────────────────────────────
+        let saveBoardTimer = null;
+        const SAVE_DEBOUNCE_MS = 400;
+        let latestSaveVersion = 0;
+
+        function nextSaveVersion() {
+            const now = Date.now();
+            latestSaveVersion = Math.max(now, latestSaveVersion + 1);
+            return latestSaveVersion;
+        }
+
+        // Immediately enqueue a Firestore write — called by the debounce timer
+        // and by flush paths (sign-out, tab close, board switch).
+        function commitSaveNow(boardId = activeBoardId, columns = null, updatedAt = null) {
+            if (!currentUser || !boardId) return;
+            const columnsToPersist = Array.isArray(columns) ? columns : collectBoardColumns();
+            const version = normalizeUpdatedAt(updatedAt) || nextSaveVersion();
+            persistLocalBoardColumns(boardId, columnsToPersist, { updatedAt: version, dirty: true });
             const priorSave = savePromise || Promise.resolve();
             const nextSave = priorSave
                 .catch(() => {
                     // Keep the queue alive even if a previous save failed.
                 })
-                .then(() => persistBoardColumns(boardId, columns));
+                .then(() => persistBoardColumns(boardId, columnsToPersist, version));
             savePromise = nextSave.finally(() => {
                 if (savePromise === nextSave) savePromise = null;
             });
         }
 
+        // Debounced entry point — all user actions call this.
+        // Batches rapid successive changes into a single write.
+        function saveBoard() {
+            if (!currentUser || !activeBoardId) return;
+            clearTimeout(saveBoardTimer);
+            saveBoardTimer = setTimeout(() => {
+                saveBoardTimer = null;
+                commitSaveNow();
+            }, SAVE_DEBOUNCE_MS);
+        }
+
         async function flushPendingSave() {
+            // Fire the debounce immediately if one is queued, then await the write.
+            if (saveBoardTimer !== null) {
+                clearTimeout(saveBoardTimer);
+                saveBoardTimer = null;
+                commitSaveNow();
+            }
             const pending = savePromise;
             if (!pending) return;
             try { await pending; }
@@ -1214,7 +1532,7 @@
         }
 
         async function flushPendingSaveWithTimeout(timeoutMs = 1500) {
-            if (!savePromise) return;
+            if (!savePromise && saveBoardTimer === null) return;
             let timedOut = false;
             await Promise.race([
                 flushPendingSave(),
@@ -1293,11 +1611,17 @@
         async function renameBoard(boardId) {
             const board = boardList.find(b => b.id === boardId);
             if (!board) return;
-            const proposed = prompt('Rename task list:', board.name || '');
+            const proposed = await showModal({
+                type: 'prompt',
+                title: 'Rename World',
+                defaultValue: board.name || '',
+                placeholder: 'Enter a new name…',
+                confirmLabel: 'Rename'
+            });
             if (proposed === null) return;
             const name = proposed.trim();
             if (!name) {
-                alert('Task list name cannot be empty.');
+                await showModal({ type: 'alert', title: 'Invalid Name', message: 'Task list name cannot be empty.' });
                 return;
             }
             board.name = name.slice(0, 100);
@@ -1305,43 +1629,146 @@
             renderTaskListNav();
         }
 
-        async function reorderBoardList(draggedId, targetId) {
-            if (!draggedId || !targetId || draggedId === targetId) return;
+        async function reorderBoardList(draggedId, rawInsertIndex) {
+            if (!draggedId) return;
             const fromIndex = boardList.findIndex(b => b.id === draggedId);
-            const toIndex = boardList.findIndex(b => b.id === targetId);
-            if (fromIndex === -1 || toIndex === -1) return;
+            if (fromIndex === -1 || boardList.length <= 1) return;
+            const totalBoards = boardList.length;
+            let insertIndex = Number(rawInsertIndex);
+            if (!Number.isInteger(insertIndex)) return;
+            if (insertIndex < 0) insertIndex = 0;
+            if (insertIndex > totalBoards) insertIndex = totalBoards;
+            // Dropping directly before or after itself does not change order.
+            if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
+
             const [moved] = boardList.splice(fromIndex, 1);
-            const insertIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
-            boardList.splice(insertIndex, 0, moved);
+            const adjustedIndex = insertIndex > fromIndex ? insertIndex - 1 : insertIndex;
+            boardList.splice(adjustedIndex, 0, moved);
             await persistBoardsIndex();
             renderTaskListNav();
         }
+
+        function getTaskListDropZones() {
+            return Array.from(taskListNav.querySelectorAll('.task-list-drop-zone'));
+        }
+
+        function getNearestTaskListDropZone(clientY) {
+            const zones = getTaskListDropZones();
+            if (zones.length === 0) return null;
+            let nearest = zones[0];
+            let nearestDistance = Number.POSITIVE_INFINITY;
+            zones.forEach(zone => {
+                const rect = zone.getBoundingClientRect();
+                const centerY = rect.top + rect.height / 2;
+                const distance = Math.abs(clientY - centerY);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearest = zone;
+                }
+            });
+            return nearest;
+        }
+
+        function activateNearestTaskListDropZone(clientY) {
+            const nearest = getNearestTaskListDropZone(clientY);
+            getTaskListDropZones().forEach(zone => zone.classList.remove('active'));
+            if (nearest) nearest.classList.add('active');
+            return nearest;
+        }
+
+        function createTaskListDropZone(insertIndex) {
+            const zone = document.createElement('div');
+            zone.className = 'task-list-drop-zone';
+            zone.dataset.insertIndex = String(insertIndex);
+
+            zone.addEventListener('dragover', e => {
+                if (!draggedTaskListId) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                activateNearestTaskListDropZone(e.clientY);
+            });
+
+            zone.addEventListener('dragleave', e => {
+                if (!zone.contains(e.relatedTarget)) zone.classList.remove('active');
+            });
+
+            zone.addEventListener('drop', async e => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('active');
+                const movingId = draggedTaskListId;
+                if (!movingId) return;
+                taskListNav.classList.remove('task-list-dragging');
+                taskListNav.querySelectorAll('.task-list-drop-zone').forEach(el => el.classList.remove('active'));
+                await reorderBoardList(movingId, insertIndex);
+            });
+
+            return zone;
+        }
+
+        taskListNav.addEventListener('dragover', e => {
+            if (!draggedTaskListId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            activateNearestTaskListDropZone(e.clientY);
+        });
+
+        taskListNav.addEventListener('drop', async e => {
+            if (!draggedTaskListId) return;
+            e.preventDefault();
+            const movingId = draggedTaskListId;
+            const nearestZone = activateNearestTaskListDropZone(e.clientY);
+            const fallbackZone = nearestZone || getNearestTaskListDropZone(e.clientY);
+            const insertIndex = Number(fallbackZone && fallbackZone.dataset.insertIndex);
+            if (!Number.isInteger(insertIndex)) return;
+
+            taskListNav.classList.remove('task-list-dragging');
+            taskListNav.querySelectorAll('.task-list-drop-zone').forEach(zone => zone.classList.remove('active'));
+            await reorderBoardList(movingId, insertIndex);
+        });
 
         async function deleteBoardList(boardId) {
             const board = boardList.find(b => b.id === boardId);
             if (!board) return;
             if (boardList.length <= 1) {
-                alert('You need at least one task list. Create another before deleting this one.');
+                await showModal({ type: 'alert', title: 'Cannot Delete', message: 'You need at least one world. Create another before deleting this one.' });
                 return;
             }
-            const confirmed = confirm(
-                `Delete "${board.name}"? This action cannot be undone.`
-            );
+            const confirmed = await showModal({
+                type: 'confirm',
+                title: 'Delete World',
+                message: `Delete "${board.name}"? This action cannot be undone.`,
+                confirmLabel: 'Delete',
+                danger: true
+            });
             if (!confirmed) return;
 
             const removedIndex = boardList.findIndex(b => b.id === boardId);
             boardList = boardList.filter(b => b.id !== boardId);
             pendingBoardCreates.delete(boardId);
             try {
-                await setDoc(boardStoreRef(), { columnsByBoard: { [boardId]: deleteField() } }, { merge: true });
+                await setDoc(
+                    boardStoreRef(),
+                    {
+                        columnsByBoard: { [boardId]: deleteField() },
+                        columnsMetaByBoard: { [boardId]: deleteField() }
+                    },
+                    { merge: true }
+                );
             } catch (e) {
                 console.warn('Could not delete task list document:', e);
             }
             const local = readLocalStore();
             if (local.columnsByBoard && typeof local.columnsByBoard === 'object') {
                 delete local.columnsByBoard[boardId];
-                writeLocalStore({ columnsByBoard: local.columnsByBoard });
             }
+            if (local.columnsMetaByBoard && typeof local.columnsMetaByBoard === 'object') {
+                delete local.columnsMetaByBoard[boardId];
+            }
+            writeLocalStore({
+                columnsByBoard: local.columnsByBoard || {},
+                columnsMetaByBoard: local.columnsMetaByBoard || {}
+            });
             await persistBoardsIndex();
 
             if (activeBoardId === boardId) {
@@ -1369,9 +1796,15 @@
 
         function renderTaskListNav() {
             taskListNav.innerHTML = '';
-            boardList.forEach(board => {
-                const item = document.createElement('button');
-                item.type = 'button';
+            boardList.forEach((board, index) => {
+                taskListNav.appendChild(createTaskListDropZone(index));
+
+                // Use a <div> rather than <button> — a <button> cannot legally contain
+                // other <button>s (interactive content nesting is invalid HTML).
+                // tabIndex + keydown restore keyboard accessibility for board switching.
+                const item = document.createElement('div');
+                item.tabIndex = 0;
+                item.setAttribute('role', 'button');
                 item.className = 'task-list-item' + (board.id === activeBoardId ? ' active' : '');
                 item.draggable = true;
                 item.dataset.boardId = board.id;
@@ -1395,36 +1828,34 @@
                 });
                 item.addEventListener('dragstart', e => {
                     draggedTaskListId = board.id;
+                    taskListNav.classList.add('task-list-dragging');
                     item.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setData('text/plain', board.id);
                 });
                 item.addEventListener('dragend', () => {
                     draggedTaskListId = null;
+                    taskListNav.classList.remove('task-list-dragging');
                     item.classList.remove('dragging');
-                    taskListNav.querySelectorAll('.task-list-item').forEach(el => el.classList.remove('drop-target'));
-                });
-                item.addEventListener('dragover', e => {
-                    if (!draggedTaskListId || draggedTaskListId === board.id) return;
-                    e.preventDefault();
-                    taskListNav.querySelectorAll('.task-list-item').forEach(el => el.classList.remove('drop-target'));
-                    item.classList.add('drop-target');
-                });
-                item.addEventListener('dragleave', () => {
-                    item.classList.remove('drop-target');
-                });
-                item.addEventListener('drop', async e => {
-                    e.preventDefault();
-                    item.classList.remove('drop-target');
-                    if (!draggedTaskListId || draggedTaskListId === board.id) return;
-                    await reorderBoardList(draggedTaskListId, board.id);
+                    taskListNav.querySelectorAll('.task-list-drop-zone').forEach(el => el.classList.remove('active'));
                 });
                 item.addEventListener('click', async () => {
                     if (board.id === activeBoardId) return;
                     await switchToBoard(board.id);
                 });
+                item.addEventListener('keydown', async e => {
+                    // Ignore key events originating from nested controls (rename/delete buttons).
+                    if (e.target !== item) return;
+                    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+                    e.preventDefault();
+                    if (board.id === activeBoardId) return;
+                    await switchToBoard(board.id);
+                });
                 taskListNav.appendChild(item);
             });
+            if (boardList.length > 0) {
+                taskListNav.appendChild(createTaskListDropZone(boardList.length));
+            }
             updateBoardUserInfo();
         }
 
@@ -1482,13 +1913,25 @@
                     }
 
                     if (!savePromise) {
-                        const columnsByBoard = boardStoreCache.columnsByBoard || {};
-                        const remoteColumns = columnsByBoard[activeBoardId];
-                        if (Array.isArray(remoteColumns)) {
+                        const localSnapshot = readLocalStore();
+                        const remoteState = readBoardState(boardStoreCache, activeBoardId);
+                        const localState = readBoardState(localSnapshot, activeBoardId);
+
+                        if (shouldPreferLocalColumns(localState, remoteState)) {
+                            if (localState.meta.dirty && Array.isArray(localState.columns)) {
+                                commitSaveNow(activeBoardId, localState.columns, localState.meta.updatedAt);
+                            }
+                        } else if (Array.isArray(remoteState.columns)) {
+                            const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
+                            persistLocalBoardColumns(
+                                activeBoardId,
+                                remoteState.columns,
+                                { updatedAt: remoteVersion, dirty: false }
+                            );
                             const localColumns = collectBoardColumns();
-                            if (JSON.stringify(localColumns) !== JSON.stringify(remoteColumns)) {
+                            if (JSON.stringify(localColumns) !== JSON.stringify(remoteState.columns)) {
                                 cleanupColumns();
-                                renderColumnsForBoard(remoteColumns);
+                                renderColumnsForBoard(remoteState.columns);
                             }
                         }
                     }
@@ -1511,15 +1954,38 @@
             activeBoardId = boardId;
             try {
                 const data = await getBoardStoreData();
-                const columnsByBoard = data.columnsByBoard || {};
-                const columns = columnsByBoard[boardId];
-                renderColumnsForBoard(columns);
+                const localSnapshot = readLocalStore();
+                const remoteState = readBoardState(data, boardId);
+                const localState = readBoardState(localSnapshot, boardId);
+
+                let columnsToRender = null;
+                if (shouldPreferLocalColumns(localState, remoteState)) {
+                    columnsToRender = localState.columns;
+                    if (localState.meta.dirty && Array.isArray(localState.columns)) {
+                        commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                    }
+                } else if (Array.isArray(remoteState.columns)) {
+                    columnsToRender = remoteState.columns;
+                    const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
+                    persistLocalBoardColumns(
+                        boardId,
+                        remoteState.columns,
+                        { updatedAt: remoteVersion, dirty: false }
+                    );
+                } else if (Array.isArray(localState.columns)) {
+                    columnsToRender = localState.columns;
+                    if (localState.meta.dirty) {
+                        commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                    }
+                }
+
+                renderColumnsForBoard(columnsToRender);
             } catch (e) {
                 console.error('Load failed:', e);
                 const local = readLocalStore();
-                const localColumns = (local.columnsByBoard && local.columnsByBoard[boardId]) || null;
-                if (Array.isArray(localColumns) && localColumns.length > 0) {
-                    renderColumnsForBoard(localColumns);
+                const localState = readBoardState(local, boardId);
+                if (Array.isArray(localState.columns) && localState.columns.length > 0) {
+                    renderColumnsForBoard(localState.columns);
                 } else {
                     renderDefaultColumns();
                 }
@@ -1535,7 +2001,7 @@
 
         async function createTaskList() {
             if (!currentUser) {
-                alert('Please sign in again before creating a new world.');
+                await showModal({ type: 'alert', title: 'Not Signed In', message: 'Please sign in again before creating a new world.' });
                 return;
             }
             newTaskListBtn.disabled = true;
@@ -1547,23 +2013,34 @@
                 pendingBoardCreates.add(newBoard.id);
                 renderTaskListNav();
                 await loadBoard(newBoard.id);
+                const seedVersion = nextSaveVersion();
                 try {
-                    await setDoc(boardStoreRef(), { columnsByBoard: { [newBoard.id]: defaultColumns } }, { merge: true });
+                    await setDoc(
+                        boardStoreRef(),
+                        {
+                            columnsByBoard: { [newBoard.id]: defaultColumns },
+                            columnsMetaByBoard: { [newBoard.id]: { updatedAt: seedVersion } }
+                        },
+                        { merge: true }
+                    );
+                    persistLocalBoardColumns(
+                        newBoard.id,
+                        defaultColumns,
+                        { updatedAt: seedVersion, dirty: false }
+                    );
                 } catch (e) {
                     console.warn('Could not pre-seed default columns for new task list:', e);
+                    persistLocalBoardColumns(
+                        newBoard.id,
+                        defaultColumns,
+                        { updatedAt: seedVersion, dirty: true }
+                    );
                 }
-                const local = readLocalStore();
-                writeLocalStore({
-                    columnsByBoard: {
-                        ...(local.columnsByBoard || {}),
-                        [newBoard.id]: defaultColumns
-                    }
-                });
                 await persistBoardsIndex();
                 renderTaskListNav();
             } catch (e) {
                 console.error('Failed to create task list:', e);
-                alert('Could not create a new world right now. Please try again.');
+                await showModal({ type: 'alert', title: 'Error', message: 'Could not create a new world right now. Please try again.' });
             } finally {
                 newTaskListBtn.disabled = false;
             }
@@ -1577,7 +2054,21 @@
                     ? data.boards
                     : null;
                 if (boardsSource && boardsSource.length > 0) {
-                    boardList = normalizeBoards(boardsSource);
+                    const remoteBoards = normalizeBoards(boardsSource);
+                    const localBoards = Array.isArray(local.boards) ? normalizeBoards(local.boards) : [];
+                    const remoteIds = new Set(remoteBoards.map(board => board.id));
+                    const localOnlyBoards = localBoards.filter(board => {
+                        if (remoteIds.has(board.id)) return false;
+                        const localState = readBoardState(local, board.id);
+                        return Array.isArray(localState.columns) || localState.meta.dirty;
+                    });
+                    boardList = localOnlyBoards.length > 0
+                        ? [...remoteBoards, ...localOnlyBoards]
+                        : remoteBoards;
+                    if (localOnlyBoards.length > 0) {
+                        // Promote locally-created boards that never made it to cloud.
+                        await persistBoardsIndex();
+                    }
                 } else if (Array.isArray(local.boards) && local.boards.length > 0) {
                     // One-time recovery path: promote local cache to cloud if remote index is empty.
                     boardList = normalizeBoards(local.boards);
@@ -1585,10 +2076,23 @@
                     const localColumnsByBoard = local.columnsByBoard && typeof local.columnsByBoard === 'object'
                         ? local.columnsByBoard
                         : {};
+                    const localColumnsMetaByBoard = local.columnsMetaByBoard && typeof local.columnsMetaByBoard === 'object'
+                        ? local.columnsMetaByBoard
+                        : {};
                     for (const board of boardList) {
                         const cachedCols = localColumnsByBoard[board.id];
                         if (Array.isArray(cachedCols)) {
-                            await setDoc(boardStoreRef(), { columnsByBoard: { [board.id]: cachedCols } }, { merge: true });
+                            const cachedMeta = localColumnsMetaByBoard[board.id];
+                            const cachedUpdatedAt = normalizeUpdatedAt(cachedMeta && cachedMeta.updatedAt) || nextSaveVersion();
+                            await setDoc(
+                                boardStoreRef(),
+                                {
+                                    columnsByBoard: { [board.id]: cachedCols },
+                                    columnsMetaByBoard: { [board.id]: { updatedAt: cachedUpdatedAt } }
+                                },
+                                { merge: true }
+                            );
+                            markLocalBoardCleanIfCurrent(board.id, cachedUpdatedAt);
                         }
                     }
                 } else {
@@ -1597,22 +2101,36 @@
                         ? data.columns
                         : createDefaultColumns();
                     boardList = [createBoardMeta('Gaia 1')];
+                    const seedVersion = nextSaveVersion();
                     try {
                         await setDoc(
                             boardStoreRef(),
-                            { columnsByBoard: { [boardList[0].id]: seededColumns } },
+                            {
+                                columnsByBoard: { [boardList[0].id]: seededColumns },
+                                columnsMetaByBoard: { [boardList[0].id]: { updatedAt: seedVersion } }
+                            },
                             { merge: true }
+                        );
+                        persistLocalBoardColumns(
+                            boardList[0].id,
+                            seededColumns,
+                            { updatedAt: seedVersion, dirty: false }
                         );
                     } catch (e) {
                         console.warn('Could not pre-seed first task list:', e);
+                        persistLocalBoardColumns(
+                            boardList[0].id,
+                            seededColumns,
+                            { updatedAt: seedVersion, dirty: true }
+                        );
                     }
                     writeLocalStore({
-                        boards: boardList,
-                        columnsByBoard: { [boardList[0].id]: seededColumns }
+                        boards: boardList
                     });
                     await persistBoardsIndex();
                 }
 
+                queueDirtyLocalBoardsForSync(data);
                 const preferredBoard = activeBoardId && boardList.some(b => b.id === activeBoardId)
                     ? activeBoardId
                     : boardList[0].id;
@@ -1661,6 +2179,11 @@
 
             li.appendChild(span);
             li.appendChild(buttons);
+            span.title = 'Click to edit task';
+            span.addEventListener('click', e => {
+                e.stopPropagation();
+                beginInlineTaskEdit(li);
+            });
 
             li.addEventListener('dragstart', e => {
                 draggedCard = li;
@@ -1672,6 +2195,74 @@
                 document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
             });
             return li;
+        }
+
+        function beginInlineTaskEdit(card) {
+            if (!card || card.dataset.inlineEditing === 'true') return;
+            const textEl = card.querySelector('span');
+            if (!textEl) return;
+
+            const originalText = textEl.textContent || '';
+            const wasDraggable = card.draggable;
+            card.dataset.inlineEditing = 'true';
+            card.classList.add('editing');
+            card.draggable = false;
+            textEl.setAttribute('contenteditable', 'true');
+            textEl.spellcheck = true;
+            textEl.focus();
+
+            const selection = window.getSelection();
+            if (selection) {
+                const range = document.createRange();
+                range.selectNodeContents(textEl);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+            let cancelled = false;
+            const finish = () => {
+                textEl.removeEventListener('keydown', onKeydown);
+                textEl.removeEventListener('blur', onBlur);
+                textEl.removeAttribute('contenteditable');
+                textEl.spellcheck = false;
+                card.classList.remove('editing');
+                card.draggable = wasDraggable;
+                delete card.dataset.inlineEditing;
+
+                if (cancelled) {
+                    textEl.textContent = originalText;
+                    return;
+                }
+
+                let nextText = (textEl.textContent || '').trim();
+                if (!nextText) {
+                    textEl.textContent = originalText;
+                    return;
+                }
+                if (nextText.length > 500) {
+                    nextText = nextText.slice(0, 500);
+                }
+                textEl.textContent = nextText;
+                if (nextText !== originalText) saveBoard();
+            };
+
+            const onKeydown = e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    textEl.blur();
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelled = true;
+                    textEl.blur();
+                }
+            };
+
+            const onBlur = () => finish();
+            textEl.addEventListener('keydown', onKeydown);
+            textEl.addEventListener('blur', onBlur);
         }
 
         // ── Column drop zones ─────────────────────────────────────────
@@ -1785,7 +2376,6 @@
             const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
-            if (text.length > 500) { alert('Task text is too long (max 500 characters).'); return; }
             col.querySelector('.task-list').prepend(createTaskCard(text, false));
             input.value = '';
             if (input._rotatePlaceholder) input._rotatePlaceholder();
@@ -1814,12 +2404,19 @@
             saveBoard();
         }
 
-        function deleteColumn(col) {
+        async function deleteColumn(col) {
             const taskCount = col.querySelectorAll('.task-card').length;
             const msg = taskCount > 0
                 ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
                 : 'Abandon this struggle? This cannot be undone.';
-            if (!confirm(msg)) return;
+            const confirmed = await showModal({
+                type: 'confirm',
+                title: 'Abandon Struggle',
+                message: msg,
+                confirmLabel: 'Abandon',
+                danger: true
+            });
+            if (!confirmed) return;
             // Clear placeholder rotation intervals before removing the column
             col.querySelectorAll('.task-input').forEach(input => {
                 if (input._intervalId) clearInterval(input._intervalId);
@@ -1876,14 +2473,22 @@
                 await signOut(auth);
             } catch (e) {
                 console.error('Sign out failed:', e);
-                alert('Sign out failed — please try again.');
+                await showModal({ type: 'alert', title: 'Sign Out Failed', message: 'Sign out failed — please try again.' });
             }
         });
 
         addColumnBtn.addEventListener('click', () => addColumn());
         newTaskListBtn.addEventListener('click', createTaskList);
         window.addEventListener('beforeunload', () => {
-            if (currentUser && activeBoardId) saveBoard();
+            // Skip debounce and persist a local snapshot synchronously before close.
+            if (currentUser && activeBoardId) {
+                clearTimeout(saveBoardTimer);
+                saveBoardTimer = null;
+                const boardId = activeBoardId;
+                const columns = collectBoardColumns();
+                // Best-effort cloud enqueue; may not complete before teardown.
+                commitSaveNow(boardId, columns);
+            }
         });
 
         // Prevent snap-back when dropping column over child elements
