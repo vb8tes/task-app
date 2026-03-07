@@ -1041,6 +1041,8 @@
                 const bodyEl    = document.getElementById('modal-body');
                 const inputEl   = document.getElementById('modal-input');
                 const actionsEl = document.getElementById('modal-actions');
+                let isClosed = false;
+                let promptKeyHandler = null;
 
                 titleEl.textContent      = title;
                 bodyEl.textContent       = message;
@@ -1059,8 +1061,11 @@
                 if (type === 'prompt') requestAnimationFrame(() => { inputEl.focus(); inputEl.select(); });
 
                 function close(result) {
+                    if (isClosed) return;
+                    isClosed = true;
                     overlay.style.display = 'none';
                     document.removeEventListener('keydown', escHandler);
+                    if (promptKeyHandler) inputEl.removeEventListener('keydown', promptKeyHandler);
                     resolve(result);
                 }
 
@@ -1072,26 +1077,33 @@
 
                 if (type !== 'alert') {
                     const cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
                     cancelBtn.className   = 'modal-btn modal-btn-secondary';
                     cancelBtn.textContent = cancelLabel;
-                    cancelBtn.addEventListener('click', () => close(type === 'confirm' ? false : null));
+                    const cancelAction = () => {
+                        close(type === 'confirm' ? false : null);
+                    };
+                    cancelBtn.addEventListener('click', cancelAction);
                     actionsEl.appendChild(cancelBtn);
                 }
 
                 const confirmBtn = document.createElement('button');
+                confirmBtn.type = 'button';
                 confirmBtn.className   = 'modal-btn ' + (danger ? 'modal-btn-danger' : 'modal-btn-primary');
                 confirmBtn.textContent = type === 'alert' ? 'OK' : confirmLabel;
-                confirmBtn.addEventListener('click', () => {
+                const confirmAction = () => {
                     if (type === 'prompt') close(inputEl.value);
                     else if (type === 'confirm') close(true);
                     else close(undefined);
-                });
+                };
+                confirmBtn.addEventListener('click', confirmAction);
                 actionsEl.appendChild(confirmBtn);
 
                 if (type === 'prompt') {
-                    inputEl.addEventListener('keydown', function handler(e) {
+                    promptKeyHandler = function handler(e) {
                         if (e.key === 'Enter') { inputEl.removeEventListener('keydown', handler); confirmBtn.click(); }
-                    });
+                    };
+                    inputEl.addEventListener('keydown', promptKeyHandler);
                 }
             });
         }
@@ -1746,18 +1758,7 @@
             const removedIndex = boardList.findIndex(b => b.id === boardId);
             boardList = boardList.filter(b => b.id !== boardId);
             pendingBoardCreates.delete(boardId);
-            try {
-                await setDoc(
-                    boardStoreRef(),
-                    {
-                        columnsByBoard: { [boardId]: deleteField() },
-                        columnsMetaByBoard: { [boardId]: deleteField() }
-                    },
-                    { merge: true }
-                );
-            } catch (e) {
-                console.warn('Could not delete task list document:', e);
-            }
+
             const local = readLocalStore();
             if (local.columnsByBoard && typeof local.columnsByBoard === 'object') {
                 delete local.columnsByBoard[boardId];
@@ -1769,14 +1770,34 @@
                 columnsByBoard: local.columnsByBoard || {},
                 columnsMetaByBoard: local.columnsMetaByBoard || {}
             });
-            await persistBoardsIndex();
 
             if (activeBoardId === boardId) {
                 const fallbackIndex = Math.max(0, removedIndex - 1);
                 const fallbackBoard = boardList[fallbackIndex] || boardList[0];
-                if (fallbackBoard) await loadBoard(fallbackBoard.id);
+                if (fallbackBoard) {
+                    activeBoardId = fallbackBoard.id;
+                    await loadBoard(fallbackBoard.id);
+                } else {
+                    cleanupColumns();
+                    activeBoardId = null;
+                }
             }
             renderTaskListNav();
+
+            // Persist deletions in background so UI never waits on network.
+            persistBoardsIndex().catch(e => {
+                console.warn('Could not persist board index after deletion:', e);
+            });
+            setDoc(
+                boardStoreRef(),
+                {
+                    columnsByBoard: { [boardId]: deleteField() },
+                    columnsMetaByBoard: { [boardId]: deleteField() }
+                },
+                { merge: true }
+            ).catch(e => {
+                console.warn('Could not delete task list document:', e);
+            });
         }
 
         function updateBoardUserInfo() {
@@ -1806,7 +1827,7 @@
                 item.tabIndex = 0;
                 item.setAttribute('role', 'button');
                 item.className = 'task-list-item' + (board.id === activeBoardId ? ' active' : '');
-                item.draggable = true;
+                item.draggable = false;
                 item.dataset.boardId = board.id;
                 item.innerHTML = `
                     <span class="task-list-head">
@@ -1818,15 +1839,41 @@
                     </span>
                 `;
                 item.querySelector('.task-list-name').textContent = board.name || 'Gaia';
-                item.querySelector('.rename-list-btn').addEventListener('click', async e => {
+                const renameBtn = item.querySelector('.rename-list-btn');
+                const deleteBtn = item.querySelector('.delete-list-btn');
+                const suppressActionDrag = e => {
+                    item.draggable = false;
+                    e.stopPropagation();
+                };
+
+                renameBtn.addEventListener('mousedown', suppressActionDrag);
+                deleteBtn.addEventListener('mousedown', suppressActionDrag);
+
+                renameBtn.addEventListener('click', async e => {
                     e.stopPropagation();
                     await renameBoard(board.id);
                 });
-                item.querySelector('.delete-list-btn').addEventListener('click', async e => {
+                deleteBtn.addEventListener('click', async e => {
                     e.stopPropagation();
                     await deleteBoardList(board.id);
                 });
+
+                item.addEventListener('mousedown', e => {
+                    if (e.button !== 0) return;
+                    if (e.target.closest('.task-list-actions')) return;
+                    item.draggable = true;
+                });
+                item.addEventListener('mouseup', () => {
+                    if (!draggedTaskListId) item.draggable = false;
+                });
+                item.addEventListener('mouseleave', () => {
+                    if (!draggedTaskListId) item.draggable = false;
+                });
                 item.addEventListener('dragstart', e => {
+                    if (!item.draggable) {
+                        e.preventDefault();
+                        return;
+                    }
                     draggedTaskListId = board.id;
                     taskListNav.classList.add('task-list-dragging');
                     item.classList.add('dragging');
@@ -1835,6 +1882,7 @@
                 });
                 item.addEventListener('dragend', () => {
                     draggedTaskListId = null;
+                    item.draggable = false;
                     taskListNav.classList.remove('task-list-dragging');
                     item.classList.remove('dragging');
                     taskListNav.querySelectorAll('.task-list-drop-zone').forEach(el => el.classList.remove('active'));
