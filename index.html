@@ -181,10 +181,38 @@
         }
 
         #user-name {
-            color: white;
-            font-size: var(--meta-size);
-            color: rgba(255,255,255,0.82);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            display: none;
+        }
+
+        #app-tooltip {
+            position: fixed;
+            left: 0;
+            top: 0;
+            max-width: 300px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(156, 186, 221, 0.45);
+            background: rgba(20, 26, 34, 0.92);
+            color: rgba(245, 250, 255, 0.96);
+            font-size: 12px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-2px);
+            pointer-events: none;
+            transition: opacity 0.08s ease, transform 0.08s ease, visibility 0s linear 0.08s;
+            z-index: 260;
+        }
+
+        #app-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
         }
 
         #signout-btn {
@@ -1053,6 +1081,124 @@
         const currentTaskListLabel = document.getElementById('current-task-list-label');
         const topBar = document.getElementById('top-bar');
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
+        const appTooltip = document.createElement('div');
+        appTooltip.id = 'app-tooltip';
+        document.body.appendChild(appTooltip);
+        const TOOLTIP_SHOW_DELAY_MS = 400;
+        let tooltipAnchor = null;
+        let tooltipShowTimer = null;
+
+        function getTooltipTarget(node) {
+            if (!(node instanceof Element)) return null;
+            const el = node.closest('[data-tooltip]');
+            if (!el) return null;
+            const text = el.getAttribute('data-tooltip');
+            return text && text.trim() ? el : null;
+        }
+
+        function positionTooltip(clientX, clientY) {
+            const offsetX = 12;
+            const offsetY = 16;
+            const margin = 8;
+            const rect = appTooltip.getBoundingClientRect();
+            const maxLeft = window.innerWidth - rect.width - margin;
+            const maxTop = window.innerHeight - rect.height - margin;
+            const left = Math.max(margin, Math.min(clientX + offsetX, maxLeft));
+            const top = Math.max(margin, Math.min(clientY + offsetY, maxTop));
+            appTooltip.style.left = `${left}px`;
+            appTooltip.style.top = `${top}px`;
+        }
+
+        function clearTooltipTimer() {
+            if (!tooltipShowTimer) return;
+            clearTimeout(tooltipShowTimer);
+            tooltipShowTimer = null;
+        }
+
+        function setTooltipPosition(target, sourceEvent = null) {
+            if (sourceEvent && 'clientX' in sourceEvent && 'clientY' in sourceEvent) {
+                positionTooltip(sourceEvent.clientX, sourceEvent.clientY);
+                return;
+            }
+            const rect = target.getBoundingClientRect();
+            positionTooltip(rect.left + Math.min(rect.width / 2, 24), rect.bottom);
+        }
+
+        function showTooltip(target, sourceEvent = null) {
+            if (!target) return;
+            const text = target.getAttribute('data-tooltip');
+            if (!text || !text.trim()) return;
+            clearTooltipTimer();
+            tooltipAnchor = target;
+            appTooltip.textContent = text;
+            appTooltip.classList.add('visible');
+            setTooltipPosition(target, sourceEvent);
+        }
+
+        function queueTooltip(target, sourceEvent = null) {
+            if (!target) return;
+            const text = target.getAttribute('data-tooltip');
+            if (!text || !text.trim()) return;
+            clearTooltipTimer();
+            tooltipAnchor = target;
+            appTooltip.textContent = text;
+            appTooltip.classList.remove('visible');
+            setTooltipPosition(target, sourceEvent);
+            tooltipShowTimer = setTimeout(() => {
+                if (tooltipAnchor !== target) return;
+                appTooltip.classList.add('visible');
+                tooltipShowTimer = null;
+            }, TOOLTIP_SHOW_DELAY_MS);
+        }
+
+        function hideTooltip() {
+            clearTooltipTimer();
+            tooltipAnchor = null;
+            appTooltip.classList.remove('visible');
+        }
+
+        document.addEventListener('mouseover', e => {
+            const target = getTooltipTarget(e.target);
+            if (!target) return;
+            if (target === tooltipAnchor) return;
+            hideTooltip();
+            queueTooltip(target, e);
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!tooltipAnchor) return;
+            positionTooltip(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseout', e => {
+            if (!tooltipAnchor) return;
+            const leaving = getTooltipTarget(e.target);
+            if (!leaving || leaving !== tooltipAnchor) return;
+            const entering = getTooltipTarget(e.relatedTarget);
+            if (entering === tooltipAnchor) return;
+            hideTooltip();
+        });
+
+        document.addEventListener('focusin', e => {
+            const target = getTooltipTarget(e.target);
+            if (!target) return;
+            hideTooltip();
+            showTooltip(target);
+        });
+
+        document.addEventListener('focusout', e => {
+            if (!tooltipAnchor) return;
+            const leaving = getTooltipTarget(e.target);
+            if (!leaving || leaving !== tooltipAnchor) return;
+            const entering = getTooltipTarget(e.relatedTarget);
+            if (entering === tooltipAnchor) return;
+            hideTooltip();
+        });
+
+        window.addEventListener('scroll', () => {
+            if (tooltipAnchor) hideTooltip();
+        }, true);
+        window.addEventListener('resize', hideTooltip);
 
         // ── Custom modal ──────────────────────────────────────────────
         // type: 'alert' | 'confirm' | 'prompt'
@@ -1827,7 +1973,7 @@
             const activeBoard = findActiveBoardMeta();
             if (!activeBoard) {
                 currentTaskListLabel.textContent = '';
-                currentTaskListLabel.title = '';
+                currentTaskListLabel.removeAttribute('data-tooltip');
                 return;
             }
             const profile = activeBoard.profile || {};
@@ -1835,7 +1981,7 @@
             const role = profile.role || 'Stone Pusher';
             const tag = profile.tag || '0000';
             currentTaskListLabel.textContent = activeBoard.name || '';
-            currentTaskListLabel.title = `Click to rename task list (${alias} / ${role} #${tag})`;
+            currentTaskListLabel.dataset.tooltip = `Click to rename task list (${alias} / ${role} #${tag})`;
         }
 
         function renderTaskListNav() {
@@ -1856,8 +2002,8 @@
                     <span class="task-list-head">
                         <span class="task-list-name"></span>
                         <span class="task-list-actions">
-                            <button class="rename-list-btn" type="button" title="Rename task list">Aa</button>
-                            <button class="delete-list-btn" type="button" title="Delete task list">×</button>
+                            <button class="rename-list-btn" type="button" data-tooltip="Rename task list">Aa</button>
+                            <button class="delete-list-btn" type="button" data-tooltip="Delete task list">×</button>
                         </span>
                     </span>
                 `;
@@ -2250,7 +2396,7 @@
 
             li.appendChild(span);
             li.appendChild(buttons);
-            span.title = 'Click to edit task';
+            span.dataset.tooltip = 'Click to edit task';
             span.addEventListener('click', e => {
                 e.stopPropagation();
                 beginInlineTaskEdit(li);
@@ -2367,9 +2513,9 @@
             col.dataset.id = id;
             col.innerHTML = `
                 <div class="column-header">
-                    <div class="col-drag-handle" title="Drag to reorder">⠿</div>
-                    <input class="column-title" type="text" title="Click to rename" maxlength="100" />
-                    <button class="delete-col-btn" title="Delete column">✕</button>
+                    <div class="col-drag-handle" data-tooltip="Drag to reorder">⠿</div>
+                    <input class="column-title" type="text" data-tooltip="Click to rename" maxlength="100" />
+                    <button class="delete-col-btn" data-tooltip="Delete column">✕</button>
                 </div>
                 <div class="task-input-row">
                     <input class="task-input" type="text" maxlength="500" />
@@ -2577,9 +2723,11 @@
 
             const accountLabel = user.email || user.displayName || 'Unknown account';
             userName.textContent = accountLabel;
-            userName.title = accountLabel;
             userAvatar.src = user.photoURL || '';
             userAvatar.style.display = user.photoURL ? 'block' : 'none';
+            userAvatar.dataset.tooltip = accountLabel;
+            userAvatar.alt = accountLabel;
+            userAvatar.setAttribute('aria-label', accountLabel);
 
             userBar.style.display = 'flex';
             sidebar.style.display = 'block';
@@ -2604,6 +2752,11 @@
             cleanupColumns();
             taskListNav.innerHTML = '';
             updateBoardUserInfo();
+            userAvatar.src = '';
+            userAvatar.removeAttribute('data-tooltip');
+            userAvatar.alt = '';
+            userAvatar.removeAttribute('aria-label');
+            userAvatar.style.display = 'none';
 
             boardEl.style.display = 'none';
             loadingScreen.style.display = 'none';
