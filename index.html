@@ -1683,12 +1683,16 @@
                     // Keep the queue alive even if a previous save failed.
                 })
                 .then(() => persistBoardColumns(boardId, columnsToPersist, version));
-            savePromise = nextSave.finally(() => {
-                if (savePromise === nextSave) {
+            // .finally() returns a NEW promise, so we must compare against
+            // that wrapper — not nextSave — to correctly detect whether a
+            // newer save has been enqueued while this one was in flight.
+            const settled = nextSave.finally(() => {
+                if (savePromise === settled) {
                     savePromise = null;
                     reconcileAfterSave();
                 }
             });
+            savePromise = settled;
         }
 
         // After a save completes, check whether remote data arrived
