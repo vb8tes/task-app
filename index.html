@@ -1021,7 +1021,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc, deleteField, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, deleteField, onSnapshot, collection, query, orderBy, updateDoc, deleteDoc, getDocs, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // ── Firebase init ─────────────────────────────────────────────
         const firebaseConfig = {
@@ -1049,6 +1049,7 @@
         let boardList = [];
         let boardStoreCache = null;
         let unsubscribeBoardStore = null;
+        let unsubscribeTasksListener = null;
         const pendingBoardCreates = new Set();
         const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
         const GITHUB_REPO_OWNER = 'vb8tes';
@@ -1288,6 +1289,103 @@
             return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 2 + randomLength)}`;
         }
 
+        // ── Task subcollection helpers ────────────────────────────────
+        function tasksCollectionRef(boardId) {
+            return collection(db, 'users', currentUser.uid, 'boards', boardId, 'tasks');
+        }
+
+        function taskDocRef(boardId, taskId) {
+            return doc(db, 'users', currentUser.uid, 'boards', boardId, 'tasks', taskId);
+        }
+
+        // ── Fractional ordering ───────────────────────────────────────
+        // Lexicographic string keys that allow insertion between any two
+        // adjacent items without rewriting every sibling's position.
+        //
+        // Keys are lowercase alpha strings (a-z).  The empty string is
+        // treated as "before everything" and null/undefined as "after
+        // everything", so callers can write:
+        //   orderKeyBetween(null, firstKey)   → key before firstKey
+        //   orderKeyBetween(lastKey, null)    → key after  lastKey
+        //   orderKeyBetween(keyA, keyB)       → key between A and B
+
+        const ORDER_BASE = 26;          // a-z
+        const ORDER_CHAR_OFFSET = 97;   // 'a'.charCodeAt(0)
+        const ORDER_DEFAULT_LENGTH = 5; // initial keys are 5 chars → 26^5 ≈ 11.8 M slots
+
+        function orderCharToNum(ch) {
+            return ch.charCodeAt(0) - ORDER_CHAR_OFFSET;
+        }
+
+        function orderNumToChar(n) {
+            return String.fromCharCode(ORDER_CHAR_OFFSET + n);
+        }
+
+        // Convert a key string to an array of digit values (base-26).
+        function orderKeyToDigits(key, length) {
+            const digits = [];
+            for (let i = 0; i < length; i++) {
+                digits.push(i < key.length ? orderCharToNum(key[i]) : 0);
+            }
+            return digits;
+        }
+
+        // Convert digit array back to a key string, trimming trailing 'a's
+        // but always keeping at least one character.
+        function orderDigitsToKey(digits) {
+            let last = digits.length - 1;
+            while (last > 0 && digits[last] === 0) last--;
+            return digits.slice(0, last + 1).map(orderNumToChar).join('');
+        }
+
+        // Return a key strictly between `before` and `after`.
+        // Pass null/undefined for unbounded sides.
+        function orderKeyBetween(before, after) {
+            if (!before && !after) return 'n';  // midpoint of a-z
+
+            // Determine working length: max of both keys + 1 for overflow room.
+            const maxLen = Math.max(
+                before ? before.length : 0,
+                after  ? after.length  : 0,
+                ORDER_DEFAULT_LENGTH
+            ) + 1;
+
+            const lo = before ? orderKeyToDigits(before, maxLen) : new Array(maxLen).fill(0);
+            const hi = after  ? orderKeyToDigits(after,  maxLen) : new Array(maxLen).fill(ORDER_BASE - 1);
+
+            // Find midpoint digit-by-digit, carrying when gap is zero.
+            const mid = new Array(maxLen).fill(0);
+            let carry = 0;
+            for (let i = maxLen - 1; i >= 0; i--) {
+                const sum = lo[i] + hi[i] + carry;
+                mid[i] = Math.floor(sum / 2);
+                carry = (sum % 2) * ORDER_BASE;
+            }
+
+            const key = orderDigitsToKey(mid);
+
+            // Safety: if midpoint collapsed to one of the bounds, extend by
+            // one character to guarantee a distinct key.
+            if (key === before || key === after) {
+                return (before || '') + 'n';
+            }
+            return key;
+        }
+
+        // Generate an orderKey that sorts after all keys in `existingKeys`.
+        function generateOrderKeyAfterAll(existingKeys) {
+            if (!existingKeys || existingKeys.length === 0) return 'n';
+            const sorted = [...existingKeys].sort();
+            return orderKeyBetween(sorted[sorted.length - 1], null);
+        }
+
+        // Generate an orderKey that sorts before all keys in `existingKeys`.
+        function generateOrderKeyBeforeAll(existingKeys) {
+            if (!existingKeys || existingKeys.length === 0) return 'n';
+            const sorted = [...existingKeys].sort();
+            return orderKeyBetween(null, sorted[0]);
+        }
+
         function pad2(value) {
             return String(value).padStart(2, '0');
         }
@@ -1403,12 +1501,7 @@
         function renderDefaultColumns() {
             const defaultColumns = createDefaultColumns();
             defaultColumns.forEach(column => {
-                const col = createColumnElement(
-                    column.id,
-                    column.name,
-                    column.tasks || [],
-                    column.completed || []
-                );
+                const col = createColumnElement(column.id, column.name, [], []);
                 insertColumnIntoBoard(col);
             });
             saveBoard();
@@ -1592,18 +1685,14 @@
             return boardStoreCache;
         }
 
+        // Collects column metadata only (id + name). Task data is now
+        // exclusively managed via the per-task subcollection.
         function collectBoardColumns() {
             const columns = [];
             document.querySelectorAll('.column').forEach(col => {
-                const tasks = [];
-                const completed = [];
-                col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
-                col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
                 columns.push({
                     id: col.dataset.id,
-                    name: col.querySelector('.column-title').value,
-                    tasks,
-                    completed
+                    name: col.querySelector('.column-title').value
                 });
             });
             return columns;
@@ -1689,36 +1778,9 @@
             const settled = nextSave.finally(() => {
                 if (savePromise === settled) {
                     savePromise = null;
-                    reconcileAfterSave();
                 }
             });
             savePromise = settled;
-        }
-
-        // After a save completes, check whether remote data arrived
-        // while savePromise was truthy (which blocks the onSnapshot handler
-        // from reconciling columns).  Without this, cross-device updates
-        // that land during a local save are silently dropped.
-        function reconcileAfterSave() {
-            if (savePromise || !boardStoreCache || !activeBoardId) return;
-            const remoteState = readBoardState(boardStoreCache, activeBoardId);
-            const localSnapshot = readLocalStore();
-            const localState = readBoardState(localSnapshot, activeBoardId);
-
-            if (shouldPreferLocalColumns(localState, remoteState)) return;
-            if (!Array.isArray(remoteState.columns)) return;
-
-            const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
-            persistLocalBoardColumns(
-                activeBoardId,
-                remoteState.columns,
-                { updatedAt: remoteVersion, dirty: false }
-            );
-            const localColumns = collectBoardColumns();
-            if (JSON.stringify(localColumns) !== JSON.stringify(remoteState.columns)) {
-                cleanupColumns();
-                renderColumnsForBoard(remoteState.columns);
-            }
         }
 
         // Debounced entry point — all user actions call this.
@@ -1780,9 +1842,7 @@
         function createDefaultColumns() {
             return DEFAULT_MOUNTAINS.map(name => ({
                 id: createEntityId('col'),
-                name,
-                tasks: [],
-                completed: []
+                name
             }));
         }
 
@@ -2002,6 +2062,14 @@
             ).catch(e => {
                 console.warn('Could not delete task list document:', e);
             });
+            // Delete all task documents in the board's subcollection.
+            getDocs(query(tasksCollectionRef(boardId))).then(snap => {
+                const batch = writeBatch(db);
+                snap.forEach(docSnap => batch.delete(docSnap.ref));
+                return batch.commit();
+            }).catch(e => {
+                console.warn('Could not delete tasks subcollection:', e);
+            });
         }
 
         function updateBoardUserInfo() {
@@ -2111,16 +2179,6 @@
             updateBoardUserInfo();
         }
 
-        function renderColumnsForBoard(columns) {
-            if (Array.isArray(columns) && columns.length > 0) {
-                columns.forEach(c => {
-                    const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
-                    insertColumnIntoBoard(col);
-                });
-                return;
-            }
-            renderDefaultColumns();
-        }
 
         function normalizeBoards(boards) {
             if (!Array.isArray(boards)) return [];
@@ -2131,6 +2189,177 @@
                     name: board.name || 'Gaia',
                     profile: board.profile || generateBoardProfile()
                 }));
+        }
+
+        // ── Surgical DOM updaters (driven by task subcollection) ──────
+        // These are the ONLY functions that mutate task cards in response
+        // to Firestore changes.  They operate on individual cards by
+        // taskId, never tearing down the whole board.
+
+        function findCardByTaskId(taskId) {
+            return document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+        }
+
+        function findColumnById(columnId) {
+            return document.querySelector(`.column[data-id="${columnId}"]`);
+        }
+
+        // Insert a task card into the correct column at the correct
+        // position (determined by orderKey).
+        function renderTaskAdded(task) {
+            // Deduplicate: if a card with this ID is already in the DOM
+            // (e.g. optimistic insert from local action), skip.
+            if (findCardByTaskId(task.id)) return;
+
+            const col = findColumnById(task.columnId);
+            if (!col) return;  // column not rendered yet — will appear on next full load
+
+            const listSelector = task.done ? '.completed-list' : '.task-list';
+            const list = col.querySelector(listSelector);
+            if (!list) return;
+
+            const card = createTaskCard(task.text, task.done, task.id);
+            card.dataset.orderKey = task.orderKey || '';
+
+            // Insert at sorted position within the list.
+            let inserted = false;
+            for (const existing of list.children) {
+                const existingKey = existing.dataset.orderKey || '';
+                if (task.orderKey && existingKey && task.orderKey < existingKey) {
+                    list.insertBefore(card, existing);
+                    inserted = true;
+                    break;
+                }
+            }
+            if (!inserted) list.appendChild(card);
+            updateDivider(col);
+        }
+
+        function renderTaskModified(task) {
+            const card = findCardByTaskId(task.id);
+            if (!card) {
+                // Card doesn't exist yet — treat as an add.
+                renderTaskAdded(task);
+                return;
+            }
+
+            // Update text
+            const span = card.querySelector('span');
+            if (span && span.textContent !== task.text) {
+                // Don't clobber text while the user is actively editing this card
+                if (card.dataset.inlineEditing !== 'true') {
+                    span.textContent = task.text;
+                }
+            }
+
+            // Update done state
+            const wasDone = card.classList.contains('done');
+            if (wasDone !== task.done) {
+                card.classList.toggle('done', task.done);
+                const btn = card.querySelector('.done-btn');
+                if (btn) {
+                    btn.textContent = task.done ? 'It Rolled Back' : 'Summit!';
+                    btn.classList.toggle('undo', task.done);
+                }
+            }
+
+            // Update orderKey
+            card.dataset.orderKey = task.orderKey || '';
+
+            // Move to correct column if columnId changed, or re-sort
+            const currentCol = card.closest('.column');
+            const targetCol = findColumnById(task.columnId);
+            const targetList = targetCol
+                ? targetCol.querySelector(task.done ? '.completed-list' : '.task-list')
+                : null;
+
+            if (targetCol && targetList) {
+                const currentList = card.parentElement;
+                const needsMove = currentCol !== targetCol
+                    || currentList !== targetList;
+
+                if (needsMove) {
+                    card.remove();
+                    // Insert at sorted position
+                    let inserted = false;
+                    for (const existing of targetList.children) {
+                        const existingKey = existing.dataset.orderKey || '';
+                        if (task.orderKey && existingKey && task.orderKey < existingKey) {
+                            targetList.insertBefore(card, existing);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if (!inserted) targetList.appendChild(card);
+                    if (currentCol) updateDivider(currentCol);
+                    updateDivider(targetCol);
+                } else {
+                    // Same list — check if position changed
+                    const siblings = Array.from(targetList.children);
+                    const currentIndex = siblings.indexOf(card);
+                    let correctIndex = siblings.length - 1;
+                    for (let i = 0; i < siblings.length; i++) {
+                        if (siblings[i] === card) continue;
+                        const sibKey = siblings[i].dataset.orderKey || '';
+                        if (task.orderKey && sibKey && task.orderKey < sibKey) {
+                            correctIndex = i > currentIndex ? i - 1 : i;
+                            break;
+                        }
+                    }
+                    if (currentIndex !== correctIndex) {
+                        card.remove();
+                        if (correctIndex >= targetList.children.length) {
+                            targetList.appendChild(card);
+                        } else {
+                            targetList.insertBefore(card, targetList.children[correctIndex]);
+                        }
+                    }
+                }
+            }
+        }
+
+        function renderTaskRemoved(taskId) {
+            const card = findCardByTaskId(taskId);
+            if (!card) return;
+            const col = card.closest('.column');
+            card.remove();
+            if (col) updateDivider(col);
+        }
+
+        // ── Task subcollection listener ───────────────────────────────
+        // Subscribes to all tasks for the active board and applies
+        // surgical DOM updates via docChanges().
+
+        function unsubscribeTasksListenerIfActive() {
+            if (unsubscribeTasksListener) {
+                unsubscribeTasksListener();
+                unsubscribeTasksListener = null;
+            }
+        }
+
+        function subscribeTasksForBoard(boardId) {
+            unsubscribeTasksListenerIfActive();
+            if (!currentUser || !boardId) return;
+
+            const q = query(tasksCollectionRef(boardId), orderBy('orderKey'));
+            unsubscribeTasksListener = onSnapshot(q, snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    const task = { id: change.doc.id, ...change.doc.data() };
+                    switch (change.type) {
+                        case 'added':
+                            renderTaskAdded(task);
+                            break;
+                        case 'modified':
+                            renderTaskModified(task);
+                            break;
+                        case 'removed':
+                            renderTaskRemoved(task.id);
+                            break;
+                    }
+                });
+            }, e => {
+                console.error('Task listener failed:', e);
+            });
         }
 
         function subscribeBoardStore() {
@@ -2164,26 +2393,31 @@
                         activeBoardId = boardList[0].id;
                     }
 
+                    // Column metadata sync (names, order) — task data is now
+                    // handled by the per-board task subcollection listener.
+                    // Only re-render column *shells* if column structure changed.
                     if (!savePromise) {
-                        const localSnapshot = readLocalStore();
                         const remoteState = readBoardState(boardStoreCache, activeBoardId);
-                        const localState = readBoardState(localSnapshot, activeBoardId);
-
-                        if (shouldPreferLocalColumns(localState, remoteState)) {
-                            if (localState.meta.dirty && Array.isArray(localState.columns)) {
-                                commitSaveNow(activeBoardId, localState.columns, localState.meta.updatedAt);
-                            }
-                        } else if (Array.isArray(remoteState.columns)) {
-                            const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
-                            persistLocalBoardColumns(
-                                activeBoardId,
-                                remoteState.columns,
-                                { updatedAt: remoteVersion, dirty: false }
-                            );
-                            const localColumns = collectBoardColumns();
-                            if (JSON.stringify(localColumns) !== JSON.stringify(remoteState.columns)) {
+                        if (Array.isArray(remoteState.columns)) {
+                            const currentColIds = Array.from(document.querySelectorAll('.column'))
+                                .map(c => c.dataset.id);
+                            const remoteColIds = remoteState.columns.map(c => c.id);
+                            const currentNames = Array.from(document.querySelectorAll('.column .column-title'))
+                                .map(input => input.value);
+                            const remoteNames = remoteState.columns.map(c => c.name);
+                            // Re-render columns only if column set or names changed
+                            if (JSON.stringify(currentColIds) !== JSON.stringify(remoteColIds)
+                                || JSON.stringify(currentNames) !== JSON.stringify(remoteNames)) {
                                 cleanupColumns();
-                                renderColumnsForBoard(remoteState.columns);
+                                // Render column shells with empty task arrays —
+                                // the task listener will populate them.
+                                remoteState.columns.forEach(c => {
+                                    const col = createColumnElement(c.id, c.name, [], []);
+                                    insertColumnIntoBoard(col);
+                                });
+                                // Re-subscribe tasks so the initial snapshot
+                                // populates the fresh column shells.
+                                subscribeTasksForBoard(activeBoardId);
                             }
                         }
                     }
@@ -2196,6 +2430,7 @@
         }
 
         function unsubscribeBoardStoreListener() {
+            unsubscribeTasksListenerIfActive();
             if (!unsubscribeBoardStore) return;
             unsubscribeBoardStore();
             unsubscribeBoardStore = null;
@@ -2203,6 +2438,7 @@
 
         async function loadBoard(boardId) {
             cleanupColumns();
+            unsubscribeTasksListenerIfActive();
             activeBoardId = boardId;
             try {
                 const data = await getBoardStoreData();
@@ -2210,14 +2446,15 @@
                 const remoteState = readBoardState(data, boardId);
                 const localState = readBoardState(localSnapshot, boardId);
 
-                let columnsToRender = null;
+                // Determine which column metadata to use for rendering shells.
+                let columnsSource = null;
                 if (shouldPreferLocalColumns(localState, remoteState)) {
-                    columnsToRender = localState.columns;
+                    columnsSource = localState.columns;
                     if (localState.meta.dirty && Array.isArray(localState.columns)) {
                         commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
                     }
                 } else if (Array.isArray(remoteState.columns)) {
-                    columnsToRender = remoteState.columns;
+                    columnsSource = remoteState.columns;
                     const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
                     persistLocalBoardColumns(
                         boardId,
@@ -2225,22 +2462,39 @@
                         { updatedAt: remoteVersion, dirty: false }
                     );
                 } else if (Array.isArray(localState.columns)) {
-                    columnsToRender = localState.columns;
+                    columnsSource = localState.columns;
                     if (localState.meta.dirty) {
                         commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
                     }
                 }
 
-                renderColumnsForBoard(columnsToRender);
+                // Render column shells (empty — no task arrays).
+                // The task subcollection listener will populate cards.
+                if (Array.isArray(columnsSource) && columnsSource.length > 0) {
+                    columnsSource.forEach(c => {
+                        const col = createColumnElement(c.id, c.name, [], []);
+                        insertColumnIntoBoard(col);
+                    });
+                } else {
+                    renderDefaultColumns();
+                }
+
+                // Start listening for task documents.
+                subscribeTasksForBoard(boardId);
             } catch (e) {
                 console.error('Load failed:', e);
                 const local = readLocalStore();
                 const localState = readBoardState(local, boardId);
                 if (Array.isArray(localState.columns) && localState.columns.length > 0) {
-                    renderColumnsForBoard(localState.columns);
+                    localState.columns.forEach(c => {
+                        const col = createColumnElement(c.id, c.name, [], []);
+                        insertColumnIntoBoard(col);
+                    });
                 } else {
                     renderDefaultColumns();
                 }
+                // Still try to subscribe even on error.
+                subscribeTasksForBoard(boardId);
             }
         }
 
@@ -2298,9 +2552,84 @@
             }
         }
 
+        // ── Task migration (Phase 3) ──────────────────────────────────
+        // On first login after the subcollection switch, copy each task
+        // from the legacy columnsByBoard arrays into individual Firestore
+        // documents.  Idempotent: guarded by a `tasksMigrated` flag and
+        // uses `setDoc` so re-runs simply overwrite identical data.
+        async function migrateUserTasksIfNeeded(data) {
+            if (!currentUser || !data) return;
+            if (data.tasksMigrated) return;
+
+            const columnsByBoard = readColumnsByBoardMap(data);
+            const boardIds = Object.keys(columnsByBoard);
+            if (boardIds.length === 0) {
+                // Nothing to migrate — mark done so we don't check again.
+                await setDoc(boardStoreRef(), { tasksMigrated: true }, { merge: true });
+                return;
+            }
+
+            console.log('[migration] Migrating legacy tasks to subcollection…');
+            for (const boardId of boardIds) {
+                const columns = columnsByBoard[boardId];
+                if (!Array.isArray(columns)) continue;
+
+                let orderIndex = 0;
+                for (const col of columns) {
+                    if (!col || !col.id) continue;
+
+                    // Active tasks
+                    const tasks = Array.isArray(col.tasks) ? col.tasks : [];
+                    for (const text of tasks) {
+                        if (typeof text !== 'string' || !text.trim()) continue;
+                        const taskId = createEntityId('task');
+                        const orderKey = String(orderIndex++).padStart(8, '0');
+                        await setDoc(taskDocRef(boardId, taskId), {
+                            id: taskId,
+                            text: text.trim(),
+                            columnId: col.id,
+                            done: false,
+                            orderKey,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+
+                    // Completed tasks
+                    const completed = Array.isArray(col.completed) ? col.completed : [];
+                    for (const text of completed) {
+                        if (typeof text !== 'string' || !text.trim()) continue;
+                        const taskId = createEntityId('task');
+                        const orderKey = String(orderIndex++).padStart(8, '0');
+                        await setDoc(taskDocRef(boardId, taskId), {
+                            id: taskId,
+                            text: text.trim(),
+                            columnId: col.id,
+                            done: true,
+                            orderKey,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                }
+                console.log(`[migration] Board "${boardId}": migrated ${orderIndex} tasks.`);
+            }
+
+            await setDoc(boardStoreRef(), { tasksMigrated: true }, { merge: true });
+            console.log('[migration] Migration complete.');
+        }
+
+        // Helper: collect all orderKeys for active (or done) tasks in a column.
+        function getOrderKeysInColumn(columnEl, listSelector) {
+            const keys = [];
+            columnEl.querySelectorAll(`${listSelector} .task-card`).forEach(card => {
+                if (card.dataset.orderKey) keys.push(card.dataset.orderKey);
+            });
+            return keys;
+        }
+
         async function initializeBoards() {
             try {
                 const data = await getBoardStoreData();
+                await migrateUserTasksIfNeeded(data);
                 const local = readLocalStore();
                 const boardsSource = Array.isArray(data.boards) && data.boards.length > 0
                     ? data.boards
@@ -2405,10 +2734,11 @@
             col.querySelector('.completed-divider').classList.toggle('visible', hasCompleted);
         }
 
-        function createTaskCard(text, done = false) {
+        function createTaskCard(text, done = false, taskId = null) {
             const li = document.createElement('li');
             li.className = 'task-card' + (done ? ' done' : '');
             li.draggable = true;
+            if (taskId) li.dataset.taskId = taskId;
 
             // Use textContent (never innerHTML) for user-supplied text to prevent XSS
             const span = document.createElement('span');
@@ -2496,7 +2826,14 @@
                     nextText = nextText.slice(0, 500);
                 }
                 textEl.textContent = nextText;
-                if (nextText !== originalText) saveBoard();
+                if (nextText !== originalText) {
+                    // Write to subcollection only.
+                    const taskId = card.dataset.taskId;
+                    if (taskId && currentUser && activeBoardId) {
+                        updateDoc(taskDocRef(activeBoardId, taskId), { text: nextText })
+                            .catch(e => console.error('renameTask write failed:', e));
+                    }
+                }
             };
 
             const onKeydown = e => {
@@ -2607,18 +2944,45 @@
                 e.preventDefault();
                 col.classList.remove('drag-over');
                 if (draggedCard) {
-                    const target = draggedCard.classList.contains('done')
+                    const isDone = draggedCard.classList.contains('done');
+                    const target = isDone
                         ? col.querySelector('.completed-list')
                         : col.querySelector('.task-list');
+                    // Optimistic DOM move — snapshot listener will confirm/correct.
                     target.appendChild(draggedCard);
                     document.querySelectorAll('.column').forEach(c => updateDivider(c));
+                    // Write to subcollection only.
+                    const taskId = draggedCard.dataset.taskId;
+                    if (taskId && currentUser && activeBoardId) {
+                        const listSelector = isDone ? '.completed-list' : '.task-list';
+                        const existingKeys = getOrderKeysInColumn(col, listSelector);
+                        const newOrderKey = generateOrderKeyAfterAll(existingKeys);
+                        draggedCard.dataset.orderKey = newOrderKey;
+                        updateDoc(taskDocRef(activeBoardId, taskId), {
+                            columnId: col.dataset.id, orderKey: newOrderKey
+                        }).catch(e => console.error('moveTask write failed:', e));
+                    }
                     draggedCard = null;
-                    saveBoard();
                 }
             });
 
-            tasks.forEach(t => col.querySelector('.task-list').appendChild(createTaskCard(t, false)));
-            completed.forEach(t => col.querySelector('.completed-list').appendChild(createTaskCard(t, true)));
+            tasks.forEach(t => {
+                // Support both plain strings (legacy) and task objects (subcollection)
+                const text = typeof t === 'string' ? t : (t.text || '');
+                const id   = typeof t === 'string' ? null : (t.id || null);
+                const key  = typeof t === 'string' ? null : (t.orderKey || null);
+                const card = createTaskCard(text, false, id);
+                if (key) card.dataset.orderKey = key;
+                col.querySelector('.task-list').appendChild(card);
+            });
+            completed.forEach(t => {
+                const text = typeof t === 'string' ? t : (t.text || '');
+                const id   = typeof t === 'string' ? null : (t.id || null);
+                const key  = typeof t === 'string' ? null : (t.orderKey || null);
+                const card = createTaskCard(text, true, id);
+                if (key) card.dataset.orderKey = key;
+                col.querySelector('.completed-list').appendChild(card);
+            });
             updateDivider(col);
             return col;
         }
@@ -2628,10 +2992,22 @@
             const input = col.querySelector('.task-input');
             const text = input.value.trim();
             if (!text) return;
-            col.querySelector('.task-list').prepend(createTaskCard(text, false));
+            const taskId = createEntityId('task');
+            const existingKeys = getOrderKeysInColumn(col, '.task-list');
+            const orderKey = generateOrderKeyBeforeAll(existingKeys);
+            // Optimistic DOM insert — snapshot listener will confirm/correct.
+            const card = createTaskCard(text, false, taskId);
+            card.dataset.orderKey = orderKey;
+            col.querySelector('.task-list').prepend(card);
             input.value = '';
             if (input._rotatePlaceholder) input._rotatePlaceholder();
-            saveBoard();
+            // Write to subcollection only.
+            if (currentUser && activeBoardId) {
+                setDoc(taskDocRef(activeBoardId, taskId), {
+                    id: taskId, text, columnId: col.dataset.id,
+                    done: false, orderKey, createdAt: serverTimestamp()
+                }).catch(e => console.error('addTask write failed:', e));
+            }
         }
 
         function toggleDone(card) {
@@ -2643,17 +3019,29 @@
             btn.classList.toggle('undo', isDone);
             if (wasDone) playRollbackVideo();
             else playSummitVideo();
+            // Optimistic DOM move — snapshot listener will confirm/correct.
             col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
             updateDivider(col);
-            saveBoard();
+            // Write to subcollection only.
+            const taskId = card.dataset.taskId;
+            if (taskId && currentUser && activeBoardId) {
+                updateDoc(taskDocRef(activeBoardId, taskId), { done: isDone })
+                    .catch(e => console.error('toggleDone write failed:', e));
+            }
         }
 
         function deleteTask(card) {
             const col = card.closest('.column');
+            const taskId = card.dataset.taskId;
             playCrushedVideo();
+            // Optimistic DOM remove — snapshot listener will confirm.
             card.remove();
             updateDivider(col);
-            saveBoard();
+            // Write to subcollection only.
+            if (taskId && currentUser && activeBoardId) {
+                deleteDoc(taskDocRef(activeBoardId, taskId))
+                    .catch(e => console.error('deleteTask write failed:', e));
+            }
         }
 
         async function deleteColumn(col) {
@@ -2673,7 +3061,21 @@
             col.querySelectorAll('.task-input').forEach(input => {
                 if (input._intervalId) clearInterval(input._intervalId);
             });
+            const columnId = col.dataset.id;
             col.remove();
+            // Delete tasks from subcollection.
+            if (columnId && currentUser && activeBoardId) {
+                getDocs(query(tasksCollectionRef(activeBoardId))).then(snap => {
+                    const batch = writeBatch(db);
+                    snap.forEach(docSnap => {
+                        if (docSnap.data().columnId === columnId) {
+                            batch.delete(docSnap.ref);
+                        }
+                    });
+                    return batch.commit();
+                }).catch(e => console.error('deleteColumn task cleanup failed:', e));
+            }
+            // Save column metadata (column removed).
             saveBoard();
         }
 
@@ -2732,14 +3134,13 @@
         addColumnBtn.addEventListener('click', () => addColumn());
         newTaskListBtn.addEventListener('click', createTaskList);
         window.addEventListener('beforeunload', () => {
-            // Skip debounce and persist a local snapshot synchronously before close.
+            // Flush any pending column-metadata save before close.
+            // Task data is already persisted per-action to the subcollection,
+            // so only column metadata needs flushing here.
             if (currentUser && activeBoardId) {
                 clearTimeout(saveBoardTimer);
                 saveBoardTimer = null;
-                const boardId = activeBoardId;
-                const columns = collectBoardColumns();
-                // Best-effort cloud enqueue; may not complete before teardown.
-                commitSaveNow(boardId, columns);
+                commitSaveNow();
             }
         });
 
