@@ -1684,8 +1684,37 @@
                 })
                 .then(() => persistBoardColumns(boardId, columnsToPersist, version));
             savePromise = nextSave.finally(() => {
-                if (savePromise === nextSave) savePromise = null;
+                if (savePromise === nextSave) {
+                    savePromise = null;
+                    reconcileAfterSave();
+                }
             });
+        }
+
+        // After a save completes, check whether remote data arrived
+        // while savePromise was truthy (which blocks the onSnapshot handler
+        // from reconciling columns).  Without this, cross-device updates
+        // that land during a local save are silently dropped.
+        function reconcileAfterSave() {
+            if (savePromise || !boardStoreCache || !activeBoardId) return;
+            const remoteState = readBoardState(boardStoreCache, activeBoardId);
+            const localSnapshot = readLocalStore();
+            const localState = readBoardState(localSnapshot, activeBoardId);
+
+            if (shouldPreferLocalColumns(localState, remoteState)) return;
+            if (!Array.isArray(remoteState.columns)) return;
+
+            const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
+            persistLocalBoardColumns(
+                activeBoardId,
+                remoteState.columns,
+                { updatedAt: remoteVersion, dirty: false }
+            );
+            const localColumns = collectBoardColumns();
+            if (JSON.stringify(localColumns) !== JSON.stringify(remoteState.columns)) {
+                cleanupColumns();
+                renderColumnsForBoard(remoteState.columns);
+            }
         }
 
         // Debounced entry point — all user actions call this.
