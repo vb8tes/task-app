@@ -1835,26 +1835,11 @@
             });
         }
 
-        function randomItem(items) {
-            return items[Math.floor(Math.random() * items.length)];
-        }
-
         function createDefaultColumns() {
             return DEFAULT_MOUNTAINS.map(name => ({
                 id: createEntityId('col'),
                 name
             }));
-        }
-
-        function generateBoardProfile() {
-            const aliases = ['Atlas', 'Nyx', 'Orion', 'Echo', 'Helios', 'Gaia', 'Astra', 'Rhea'];
-            const roles = ['Stone Pusher', 'Slope Runner', 'Peak Chaser', 'Path Climber', 'Summit Seeker'];
-            const tag = Math.random().toString(36).slice(2, 6).toUpperCase();
-            return {
-                alias: randomItem(aliases),
-                role: randomItem(roles),
-                tag
-            };
         }
 
         function nextTaskListName() {
@@ -1865,8 +1850,7 @@
         function createBoardMeta(name = nextTaskListName()) {
             return {
                 id: createEntityId('board'),
-                name,
-                profile: generateBoardProfile()
+                name
             };
         }
 
@@ -2079,12 +2063,8 @@
                 currentTaskListLabel.removeAttribute('data-tooltip');
                 return;
             }
-            const profile = activeBoard.profile || {};
-            const alias = profile.alias || 'Sisyphus';
-            const role = profile.role || 'Stone Pusher';
-            const tag = profile.tag || '0000';
             currentTaskListLabel.textContent = activeBoard.name || '';
-            currentTaskListLabel.dataset.tooltip = `Click to rename task list (${alias} / ${role} #${tag})`;
+            currentTaskListLabel.dataset.tooltip = 'Click to rename task list';
         }
 
         function renderTaskListNav() {
@@ -2186,8 +2166,7 @@
                 .filter(board => board && typeof board === 'object' && typeof board.id === 'string')
                 .map(board => ({
                     id: board.id,
-                    name: board.name || 'Gaia',
-                    profile: board.profile || generateBoardProfile()
+                    name: board.name || 'Gaia'
                 }));
         }
 
