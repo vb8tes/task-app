@@ -46,7 +46,7 @@
         }
 
         html {
-            background: #000 url('SisyphusImage3.png') no-repeat center center fixed;
+            background: #000 url('SisyphusImage9.png') no-repeat center center fixed;
             background-size: cover;
             overflow-x: auto;
         }
@@ -77,10 +77,10 @@
         .bg-action-video {
             position: fixed;
             inset: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            object-position: center;
+            object-position: center center;
             z-index: -1;
             display: none;
             pointer-events: none;
@@ -948,10 +948,10 @@
         <source src="watermarked-02af6fc2-100b-4597-9765-d40e454f4e76.mp4" type="video/mp4" />
     </video>
     <video id="crushed-video" class="bg-action-video" preload="auto" muted playsinline>
-        <source src="Getting_Crushed_Video.mp4" type="video/mp4" />
+        <source src="DropIt v2603080051.mp4" type="video/mp4" />
     </video>
     <video id="summit-video" class="bg-action-video" preload="auto" muted playsinline>
-        <source src="Top of the hill.mp4" type="video/mp4" />
+        <source src="PushItFull.mp4" type="video/mp4" />
     </video>
 
     <aside id="sidebar" class="expanded">
@@ -1563,9 +1563,11 @@
 
         function shouldPreferLocalColumns(localState, remoteState) {
             if (!Array.isArray(localState.columns)) return false;
+            // Only unsynced local edits should override remote.
+            // Clean local cache must not block cross-device updates.
+            if (!localState.meta.dirty) return !Array.isArray(remoteState.columns);
             if (!Array.isArray(remoteState.columns)) return true;
-            if (localState.meta.dirty && localState.meta.updatedAt >= remoteState.meta.updatedAt) return true;
-            return localState.meta.updatedAt > remoteState.meta.updatedAt;
+            return localState.meta.updatedAt >= remoteState.meta.updatedAt;
         }
 
         function queueDirtyLocalBoardsForSync(remoteData = boardStoreCache || {}) {

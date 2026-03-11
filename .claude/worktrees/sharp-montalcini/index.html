@@ -1,0 +1,2777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <title>Sisyphus</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YYSQK766XE"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-YYSQK766XE');
+    </script>
+    <style>
+        :root {
+            --font-sans: "Montserrat", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+            --title-size: 32px;
+            --title-weight: 700;
+            --title-tracking: -0.02em;
+            --section-size: 20px;
+            --section-weight: 600;
+            --body-size: 16px;
+            --body-weight: 400;
+            --body-strong-weight: 500;
+            --meta-size: 13px;
+            --meta-color-light: rgba(255,255,255,0.62);
+            --meta-color-dark: #6b737b;
+            --surface-card-bg: rgba(246, 249, 251, 0.9);
+            --surface-card-border: rgba(30, 40, 52, 0.12);
+            --surface-card-shadow: 0 8px 22px rgba(13, 23, 34, 0.12);
+            --surface-card-radius: 16px;
+            --surface-card-padding: 16px;
+            --dnd-drop-zone-bg: rgba(126, 169, 218, 0.38);
+            --dnd-drop-zone-border: rgba(146, 191, 241, 0.9);
+            --dnd-drop-zone-inset: inset 0 0 0 1px rgba(170, 208, 249, 0.65);
+            --dnd-drop-zone-glow: 0 0 12px rgba(126, 169, 218, 0.55);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        html {
+            background: #000 url('SisyphusImage3.png') no-repeat center center fixed;
+            background-size: cover;
+            overflow-x: auto;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            padding: 80px 24px 40px 68px;
+            box-sizing: border-box;
+            min-height: 100%;
+            min-width: max-content;
+            transition: padding-left 0.2s ease;
+        }
+
+        body.sidebar-expanded { padding-left: 296px; }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        .bg-action-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+            z-index: -1;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* ── Login Screen ──────────────────────────────────────── */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            min-width: 100vw;
+        }
+
+        #login-screen h2 {
+            color: white;
+            font-size: var(--title-size);
+            font-weight: var(--title-weight);
+            letter-spacing: var(--title-tracking);
+            margin: 0 0 8px;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        #login-screen p {
+            color: rgba(255,255,255,0.75);
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
+            margin: 0 0 32px;
+        }
+
+        #google-signin-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            color: #444;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: var(--body-size);
+            font-weight: var(--body-strong-weight);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        #google-signin-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        #google-signin-btn svg { width: 20px; height: 20px; }
+
+        /* ── Loading ───────────────────────────────────────────── */
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 8888;
+            color: white;
+            font-size: 18px;
+            min-width: 100vw;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* ── User bar ──────────────────────────────────────────── */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 80px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #user-bar {
+            position: static;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            justify-self: end;
+        }
+
+        #user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6);
+        }
+
+        #user-name {
+            display: none;
+        }
+
+        #app-tooltip {
+            position: fixed;
+            left: 0;
+            top: 0;
+            max-width: 300px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(156, 186, 221, 0.45);
+            background: rgba(20, 26, 34, 0.92);
+            color: rgba(245, 250, 255, 0.96);
+            font-size: 12px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-2px);
+            pointer-events: none;
+            transition: opacity 0.08s ease, transform 0.08s ease, visibility 0s linear 0.08s;
+            z-index: 260;
+        }
+
+        #app-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
+
+        #signout-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 4px;
+            height: 32px;
+            padding: 0 10px;
+            font-size: 13px;
+            font-weight: var(--body-strong-weight);
+            cursor: pointer;
+        }
+
+        #signout-btn:hover { background: rgba(255,255,255,0.28); }
+
+        /* ── Settings ─────────────────────────────────────────── */
+        #settings-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        #settings-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        #settings-btn:hover { background: rgba(255,255,255,0.28); }
+
+        #settings-panel {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: var(--surface-card-bg);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            padding: var(--surface-card-padding);
+            min-width: 180px;
+            box-shadow: var(--surface-card-shadow);
+            color: #222;
+            font-size: 14px;
+        }
+
+        #settings-panel.open { display: block; }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .settings-row label { cursor: pointer; }
+
+        .settings-version {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0,0,0,0.12);
+            font-size: var(--meta-size);
+            color: #4f5965;
+            text-align: right;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Sidebar ──────────────────────────────────────────── */
+        #sidebar {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            bottom: 24px;
+            width: 32px;
+            background: rgba(245, 245, 245, 0.16);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 210;
+            padding: 8px 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            transition: width 0.2s ease;
+            display: none;
+            cursor: pointer;
+        }
+
+        #sidebar.expanded {
+            width: 260px;
+            background: #5b6370;
+            border: 1px solid #778091;
+            border-radius: var(--surface-card-radius);
+            box-shadow: 0 12px 26px rgba(6, 12, 22, 0.26);
+            padding: var(--surface-card-padding);
+            overflow: hidden;
+            cursor: default;
+        }
+
+        #sidebar-toggle {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 8px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #sidebar-toggle:hover { color: rgba(255,255,255,0.85); }
+
+        #sidebar.expanded #sidebar-toggle {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #8590a3;
+            background: #6c7686;
+            color: rgba(245,249,253,0.92);
+        }
+
+        #sidebar.expanded #sidebar-toggle:hover {
+            background: rgba(106, 160, 222, 0.28);
+            border-color: rgba(146, 191, 241, 0.6);
+            color: rgba(222, 240, 255, 0.98);
+        }
+
+        #sidebar-content { display: none; }
+        #sidebar.expanded #sidebar-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 42px);
+            gap: 10px;
+        }
+
+        #sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(248, 251, 255, 0.98);
+        }
+
+        #task-list-nav {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .task-list-item {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #8792a5;
+            border-radius: var(--surface-card-radius);
+            background: #6f7a8a;
+            box-shadow: 0 4px 12px rgba(6, 12, 22, 0.18);
+            padding: var(--surface-card-padding);
+            text-align: left;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin: 3px 0;
+        }
+
+        .task-list-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .task-list-actions {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .task-list-item:hover .task-list-actions {
+            display: flex;
+        }
+
+        .task-list-item.active {
+            border-color: #7ca8dc;
+            box-shadow: inset 2px 0 0 #93bbe8, 0 6px 14px rgba(6, 12, 22, 0.22);
+            background: #7d8ca1;
+        }
+
+        .task-list-item.dragging {
+            opacity: 0.55;
+            cursor: grabbing;
+        }
+
+        .task-list-drop-zone {
+            height: 0;
+            margin: 0;
+            border-radius: 8px;
+            border: 1px dashed transparent;
+            background: transparent;
+            opacity: 0;
+            pointer-events: none;
+            transition: height 0.12s ease, margin 0.12s ease, opacity 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+        }
+
+        #task-list-nav.task-list-dragging .task-list-drop-zone {
+            height: 12px;
+            margin: 2px 0;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .task-list-drop-zone.active {
+            height: 22px;
+            margin: 4px 0;
+            border-color: var(--dnd-drop-zone-border);
+            background: var(--dnd-drop-zone-bg);
+            box-shadow: var(--dnd-drop-zone-inset);
+        }
+
+        .task-list-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(250, 253, 255, 0.99);
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rename-list-btn {
+            border: 1px solid #8590a3;
+            background: #6b7585;
+            color: rgba(240,246,252,0.82);
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1;
+            width: 28px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rename-list-btn:hover {
+            background: rgba(106, 160, 222, 0.28);
+            color: rgba(222, 240, 255, 0.98);
+            border-color: rgba(146, 191, 241, 0.6);
+        }
+
+        .delete-list-btn {
+            border: 1px solid #8590a3;
+            background: #6b7585;
+            color: rgba(240,246,252,0.82);
+            border-radius: 4px;
+            font-size: 18px;
+            line-height: 1;
+            width: 28px;
+            height: 24px;
+            padding: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-list-btn:hover {
+            background: rgba(255, 95, 95, 0.22);
+            color: rgba(255, 224, 224, 0.95);
+        }
+
+        #new-task-list-btn {
+            border: 1px solid rgba(154, 206, 255, 0.45);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-weight: var(--body-strong-weight);
+            background: rgba(102, 164, 224, 0.36);
+            color: rgba(246, 251, 255, 0.98);
+            cursor: pointer;
+        }
+
+        #new-task-list-btn:hover {
+            background: rgba(102, 164, 224, 0.48);
+            border-color: rgba(180, 223, 255, 0.65);
+        }
+
+        /* ── Title ─────────────────────────────────────────────── */
+        h1 {
+            position: static;
+            color: rgba(245, 248, 252, 0.9);
+            text-align: center;
+            font-size: 21px;
+            font-weight: 400;
+            font-style: italic;
+            margin: 0;
+            letter-spacing: 0.01em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.45);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #current-task-list-label {
+            position: static;
+            color: white;
+            font-size: var(--title-size);
+            font-weight: 600;
+            letter-spacing: var(--title-tracking);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            justify-self: start;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        @media (max-width: 900px) {
+            #sidebar { display: none; }
+            body, body.sidebar-expanded { padding-left: 24px; }
+        }
+
+        /* ── Board ─────────────────────────────────────────────── */
+        .board {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding-bottom: 24px;
+        }
+
+        /* ── Column ────────────────────────────────────────────── */
+        .column {
+            background: rgba(246, 249, 251, 0.8);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            box-shadow: var(--surface-card-shadow);
+            padding: var(--surface-card-padding);
+            min-width: 420px;
+            width: 420px;
+            flex-shrink: 0;
+            transition: background 0.15s, outline 0.15s;
+            box-sizing: border-box;
+        }
+
+        .column.drag-over {
+            background: var(--dnd-drop-zone-bg);
+            outline: 2px dashed var(--dnd-drop-zone-border);
+            box-shadow: var(--dnd-drop-zone-inset);
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 10px;
+            min-height: 34px;
+        }
+
+        .col-drag-handle {
+            cursor: grab;
+            color: #96a0aa;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            padding: 2px 0;
+            flex-shrink: 0;
+            user-select: none;
+            line-height: 1;
+        }
+
+        .col-drag-handle:hover { color: #888; }
+        .col-drag-handle:active { cursor: grabbing; }
+
+        .column.col-dragging { opacity: 0.35; }
+
+        /* Drop zone lines between columns */
+        .col-drop-zone {
+            width: 8px;
+            align-self: stretch;
+            flex-shrink: 0;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.25);
+            border: 2px dashed rgba(255,255,255,0.4);
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .col-drop-zone.active {
+            width: 36px;
+            background: var(--dnd-drop-zone-bg);
+            border-color: var(--dnd-drop-zone-border);
+            box-shadow: var(--dnd-drop-zone-glow), var(--dnd-drop-zone-inset);
+        }
+
+        .column-title {
+            flex: 1;
+            font-weight: var(--section-weight);
+            font-size: var(--section-size);
+            color: #333;
+            border: none;
+            background: transparent;
+            padding: 3px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .column-title:focus {
+            outline: 2px solid #4CAF50;
+            background: white;
+            cursor: text;
+        }
+
+        .delete-col-btn {
+            background: transparent;
+            border: none;
+            color: #8e98a3;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px 6px;
+            line-height: 1;
+            border-radius: 8px;
+            flex-shrink: 0;
+            opacity: 0.45;
+            transition: opacity 0.16s ease, background 0.16s ease, color 0.16s ease;
+        }
+
+        .column:hover .delete-col-btn,
+        .delete-col-btn:focus-visible {
+            opacity: 0.88;
+        }
+
+        .delete-col-btn:hover {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            opacity: 1;
+        }
+
+        /* ── Task input ────────────────────────────────────────── */
+        .task-input-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 8px;
+            font-size: var(--body-size);
+            font-weight: var(--body-weight);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 0;
+        }
+
+        .task-input::placeholder {
+            font-style: italic;
+            color: #6f7883;
+            opacity: 1;
+        }
+
+        .add-task-btn {
+            font-size: 15px;
+            font-weight: var(--body-strong-weight);
+            background: #2b6ecf;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 90px;
+        }
+
+        .add-task-btn:hover { background: #245fb2; }
+
+        /* ── Task lists ────────────────────────────────────────── */
+        .task-list,
+        .completed-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            min-height: 20px;
+        }
+
+        /* ── Task card ─────────────────────────────────────────── */
+        .task-card {
+            background: var(--surface-card-bg);
+            border: 1px solid var(--surface-card-border);
+            padding: 12px;
+            margin-bottom: 6px;
+            border-radius: var(--surface-card-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            box-shadow: 0 4px 14px rgba(13, 23, 34, 0.08);
+            transition: box-shadow 0.15s;
+        }
+
+        .task-card:hover { box-shadow: 0 8px 18px rgba(13, 23, 34, 0.14); }
+        .task-card.dragging { opacity: 0.45; cursor: grabbing; }
+        .task-card.editing { cursor: default; }
+        .task-card.done span { text-decoration: line-through; color: #7e8793; }
+
+        .task-card span {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+            color: #2d333a;
+            word-break: break-word;
+            cursor: text;
+            border-radius: 6px;
+            padding: 2px 4px;
+            transition: outline-color 0.12s ease, background 0.12s ease;
+            outline: 2px solid transparent;
+            outline-offset: 0;
+        }
+
+        .task-card span:not([contenteditable="true"]):hover {
+            outline-color: rgba(84, 126, 173, 0.45);
+            background: rgba(255,255,255,0.78);
+        }
+
+        .task-card span[contenteditable="true"] {
+            outline: 2px solid rgba(84, 126, 173, 0.45);
+            border-radius: 6px;
+            padding: 2px 4px;
+            background: rgba(255,255,255,0.78);
+            text-decoration: none;
+        }
+
+        /* ── Card buttons ──────────────────────────────────────── */
+        .card-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex-shrink: 0;
+            margin-left: 6px;
+            width: 96px;
+        }
+
+        .done-btn,
+        .delete-task-btn {
+            width: 100%;
+            padding: 4px 2px;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.15;
+            letter-spacing: 0;
+            white-space: nowrap;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+        }
+
+        .done-btn {
+            background: #5A738F;
+            color: #F6FAFF;
+            border: 1px solid #506985;
+        }
+        .done-btn:hover { background: #4F6781; }
+        .done-btn.undo { background: #78909C; }
+        .done-btn.undo:hover { background: #546E7A; }
+        .delete-task-btn {
+            background: #E9EEF3;
+            color: #5F6B78;
+            border: 1px solid #D5DDE6;
+        }
+        .delete-task-btn:hover {
+            background: #F4E8E8;
+            color: #9A4E4E;
+            border-color: #E3CFCF;
+        }
+
+        /* ── Completed divider ─────────────────────────────────── */
+        .completed-divider {
+            display: none;
+            align-items: center;
+            color: #525b66;
+            font-size: 13px;
+            margin: 16px 0 12px;
+            gap: 8px;
+        }
+
+        .completed-divider.visible { display: flex; }
+
+        .completed-divider::before,
+        .completed-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #b5bcc5;
+        }
+
+        /* ── Add column button ─────────────────────────────────── */
+        .add-column-btn {
+            background: rgba(246, 249, 251, 0.8);
+            border: 1px solid var(--surface-card-border);
+            border-radius: var(--surface-card-radius);
+            box-shadow: var(--surface-card-shadow);
+            min-width: 200px;
+            width: 200px;
+            flex-shrink: 0;
+            cursor: pointer;
+            color: #444;
+            font-size: 16px;
+            font-weight: var(--body-strong-weight);
+            text-align: center;
+            padding: var(--surface-card-padding);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: stretch;
+            transition: box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .add-column-btn:hover {
+            background: rgba(246, 249, 251, 0.88);
+            color: #1a2530;
+            border-color: rgba(26, 37, 48, 0.18);
+            box-shadow: 0 10px 24px rgba(13, 23, 34, 0.14);
+        }
+
+        /* ── Modal ─────────────────────────────────────────────── */
+        #modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            min-width: 100vw;
+        }
+
+        .modal-card {
+            background: #4e5a6b;
+            border: 1px solid #6b7a8e;
+            border-radius: var(--surface-card-radius);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+            padding: 28px 28px 24px;
+            width: 380px;
+            max-width: calc(100vw - 48px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(245, 250, 255, 0.97);
+            letter-spacing: -0.01em;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            color: rgba(220, 232, 245, 0.82);
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            color: rgba(245, 250, 255, 0.97);
+            font-size: 15px;
+            font-weight: 500;
+            padding: 9px 12px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .modal-input::placeholder {
+            color: rgba(190, 210, 230, 0.5);
+            font-style: italic;
+        }
+
+        .modal-input:focus {
+            border-color: rgba(120, 175, 235, 0.65);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .modal-btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            line-height: 1.2;
+            transition: background 0.15s ease;
+        }
+
+        .modal-btn-primary { background: #2b6ecf; color: white; }
+        .modal-btn-primary:hover { background: #245fb2; }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(220, 232, 245, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+        }
+        .modal-btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .modal-btn-danger { background: #c0392b; color: white; }
+        .modal-btn-danger:hover { background: #a93226; }
+    </style>
+</head>
+<body>
+    <video id="rollback-video" class="bg-action-video" preload="auto" muted playsinline>
+        <source src="watermarked-02af6fc2-100b-4597-9765-d40e454f4e76.mp4" type="video/mp4" />
+    </video>
+    <video id="crushed-video" class="bg-action-video" preload="auto" muted playsinline>
+        <source src="Getting_Crushed_Video.mp4" type="video/mp4" />
+    </video>
+    <video id="summit-video" class="bg-action-video" preload="auto" muted playsinline>
+        <source src="Top of the hill.mp4" type="video/mp4" />
+    </video>
+
+    <aside id="sidebar" class="expanded">
+        <button id="sidebar-toggle" type="button" aria-label="Toggle task lists">☰</button>
+        <div id="sidebar-content">
+            <div id="sidebar-title">Your Worlds</div>
+            <div id="task-list-nav"></div>
+            <button id="new-task-list-btn" type="button">+ New World</button>
+        </div>
+    </aside>
+
+    <!-- Custom modal -->
+    <div id="modal-overlay" role="dialog" aria-modal="true" style="display:none">
+        <div class="modal-card">
+            <div class="modal-title" id="modal-title"></div>
+            <div class="modal-body" id="modal-body"></div>
+            <input class="modal-input" id="modal-input" type="text" maxlength="200" />
+            <div class="modal-actions" id="modal-actions"></div>
+        </div>
+    </div>
+
+    <!-- Login screen -->
+    <div id="login-screen">
+        <h2>Hey Sisyphus</h2>
+        <p>Sign in to start pushing your boulder.</p>
+        <p style="color: rgba(255,255,255,0.5); font-size: 13px; margin: -20px 0 24px; max-width: 320px; text-align: center;">We only use your Google account to identify you — we don't access any other Google data.</p>
+        <p id="signin-error" style="color:#ff6b6b; font-size:13px; margin:12px 0 0; display:none;"></p>
+        <button id="google-signin-btn">
+            <svg viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Sign in with Google
+        </button>
+    </div>
+
+    <!-- Loading  Screen-->
+    <div id="loading">Loading your board...</div>
+
+    <div id="top-bar">
+        <div id="current-task-list-label"></div>
+        <h1>Hey Sisyphus, that boulder isn't going to push itself!</h1>
+        <!-- User bar -->
+        <div id="user-bar">
+            <img id="user-avatar" src="" alt="" />
+            <span id="user-name"></span>
+            <button id="signout-btn">Sign Out</button>
+            <div id="settings-container">
+                <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
+                <div id="settings-panel">
+                    <div class="settings-row">
+                        <label for="animations-toggle">Animations</label>
+                        <input id="animations-toggle" type="checkbox" checked />
+                    </div>
+                    <div id="settings-version" class="settings-version"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="board" id="board" style="display:none">
+        <button class="add-column-btn" id="addColumnBtn">+ New Struggle</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, deleteField, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // ── Firebase init ─────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyDV073-5AyLhdp7CRerBH_GwffcQ2Ke96M",
+            authDomain: "mysisyphus-xyz.firebaseapp.com",
+            projectId: "mysisyphus-xyz",
+            storageBucket: "mysisyphus-xyz.firebasestorage.app",
+            messagingSenderId: "2656917074",
+            appId: "1:2656917074:web:28a63230526b574742f18b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let draggedCard = null;
+        let draggedColumn = null;
+        let draggedTaskListId = null;
+        let activeDropZone = null;
+        let savePromise = null;
+        let activeBoardId = null;
+        let boardList = [];
+        let boardStoreCache = null;
+        let unsubscribeBoardStore = null;
+        const pendingBoardCreates = new Set();
+        const ANIMATIONS_KEY = 'sisyphusAnimationsEnabled';
+        const GITHUB_REPO_OWNER = 'vb8tes';
+        const GITHUB_REPO_NAME = 'task-app';
+        const GITHUB_REPO_API = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
+        const LEGACY_BOARD_DOC_ID = 'data';
+        const DEFAULT_MOUNTAINS = ['Mountain 1', 'Mountain 2', 'Mountain 3'];
+        const loginScreen = document.getElementById('login-screen');
+        const loadingScreen = document.getElementById('loading');
+        const boardEl = document.getElementById('board');
+        const addColumnBtn = document.getElementById('addColumnBtn');
+        const signInBtn = document.getElementById('google-signin-btn');
+        const signInError = document.getElementById('signin-error');
+        const userBar = document.getElementById('user-bar');
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const signOutBtn = document.getElementById('signout-btn');
+        const rollbackVideo = document.getElementById('rollback-video');
+        const crushedVideo = document.getElementById('crushed-video');
+        const summitVideo = document.getElementById('summit-video');
+        const actionVideos = [rollbackVideo, crushedVideo, summitVideo];
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const settingsVersion = document.getElementById('settings-version');
+        const animationsToggle = document.getElementById('animations-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const taskListNav = document.getElementById('task-list-nav');
+        const newTaskListBtn = document.getElementById('new-task-list-btn');
+        const currentTaskListLabel = document.getElementById('current-task-list-label');
+        const topBar = document.getElementById('top-bar');
+        let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
+        const appTooltip = document.createElement('div');
+        appTooltip.id = 'app-tooltip';
+        document.body.appendChild(appTooltip);
+        const TOOLTIP_SHOW_DELAY_MS = 400;
+        let tooltipAnchor = null;
+        let tooltipShowTimer = null;
+
+        function getTooltipTarget(node) {
+            if (!(node instanceof Element)) return null;
+            const el = node.closest('[data-tooltip]');
+            if (!el) return null;
+            const text = el.getAttribute('data-tooltip');
+            return text && text.trim() ? el : null;
+        }
+
+        function positionTooltip(clientX, clientY) {
+            const offsetX = 12;
+            const offsetY = 16;
+            const margin = 8;
+            const rect = appTooltip.getBoundingClientRect();
+            const maxLeft = window.innerWidth - rect.width - margin;
+            const maxTop = window.innerHeight - rect.height - margin;
+            const left = Math.max(margin, Math.min(clientX + offsetX, maxLeft));
+            const top = Math.max(margin, Math.min(clientY + offsetY, maxTop));
+            appTooltip.style.left = `${left}px`;
+            appTooltip.style.top = `${top}px`;
+        }
+
+        function clearTooltipTimer() {
+            if (!tooltipShowTimer) return;
+            clearTimeout(tooltipShowTimer);
+            tooltipShowTimer = null;
+        }
+
+        function setTooltipPosition(target, sourceEvent = null) {
+            if (sourceEvent && 'clientX' in sourceEvent && 'clientY' in sourceEvent) {
+                positionTooltip(sourceEvent.clientX, sourceEvent.clientY);
+                return;
+            }
+            const rect = target.getBoundingClientRect();
+            positionTooltip(rect.left + Math.min(rect.width / 2, 24), rect.bottom);
+        }
+
+        function showTooltip(target, sourceEvent = null) {
+            if (!target) return;
+            const text = target.getAttribute('data-tooltip');
+            if (!text || !text.trim()) return;
+            clearTooltipTimer();
+            tooltipAnchor = target;
+            appTooltip.textContent = text;
+            appTooltip.classList.add('visible');
+            setTooltipPosition(target, sourceEvent);
+        }
+
+        function queueTooltip(target, sourceEvent = null) {
+            if (!target) return;
+            const text = target.getAttribute('data-tooltip');
+            if (!text || !text.trim()) return;
+            clearTooltipTimer();
+            tooltipAnchor = target;
+            appTooltip.textContent = text;
+            appTooltip.classList.remove('visible');
+            setTooltipPosition(target, sourceEvent);
+            tooltipShowTimer = setTimeout(() => {
+                if (tooltipAnchor !== target) return;
+                appTooltip.classList.add('visible');
+                tooltipShowTimer = null;
+            }, TOOLTIP_SHOW_DELAY_MS);
+        }
+
+        function hideTooltip() {
+            clearTooltipTimer();
+            tooltipAnchor = null;
+            appTooltip.classList.remove('visible');
+        }
+
+        document.addEventListener('mouseover', e => {
+            const target = getTooltipTarget(e.target);
+            if (!target) return;
+            if (target === tooltipAnchor) return;
+            hideTooltip();
+            queueTooltip(target, e);
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!tooltipAnchor) return;
+            positionTooltip(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseout', e => {
+            if (!tooltipAnchor) return;
+            const leaving = getTooltipTarget(e.target);
+            if (!leaving || leaving !== tooltipAnchor) return;
+            const entering = getTooltipTarget(e.relatedTarget);
+            if (entering === tooltipAnchor) return;
+            hideTooltip();
+        });
+
+        document.addEventListener('focusin', e => {
+            const target = getTooltipTarget(e.target);
+            if (!target) return;
+            hideTooltip();
+            showTooltip(target);
+        });
+
+        document.addEventListener('focusout', e => {
+            if (!tooltipAnchor) return;
+            const leaving = getTooltipTarget(e.target);
+            if (!leaving || leaving !== tooltipAnchor) return;
+            const entering = getTooltipTarget(e.relatedTarget);
+            if (entering === tooltipAnchor) return;
+            hideTooltip();
+        });
+
+        window.addEventListener('scroll', () => {
+            if (tooltipAnchor) hideTooltip();
+        }, true);
+        window.addEventListener('resize', hideTooltip);
+
+        // ── Custom modal ──────────────────────────────────────────────
+        // type: 'alert' | 'confirm' | 'prompt'
+        // Returns: undefined (alert), boolean (confirm), string|null (prompt)
+        function showModal({ title = '', message = '', type = 'alert', defaultValue = '', placeholder = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false } = {}) {
+            return new Promise(resolve => {
+                const overlay   = document.getElementById('modal-overlay');
+                const titleEl   = document.getElementById('modal-title');
+                const bodyEl    = document.getElementById('modal-body');
+                const inputEl   = document.getElementById('modal-input');
+                const actionsEl = document.getElementById('modal-actions');
+                let isClosed = false;
+                let promptKeyHandler = null;
+
+                titleEl.textContent      = title;
+                bodyEl.textContent       = message;
+                bodyEl.style.display     = message ? '' : 'none';
+                actionsEl.innerHTML      = '';
+
+                if (type === 'prompt') {
+                    inputEl.style.display = '';
+                    inputEl.value         = defaultValue;
+                    inputEl.placeholder   = placeholder || '';
+                } else {
+                    inputEl.style.display = 'none';
+                }
+
+                overlay.style.display = 'flex';
+                if (type === 'prompt') requestAnimationFrame(() => { inputEl.focus(); inputEl.select(); });
+
+                function close(result) {
+                    if (isClosed) return;
+                    isClosed = true;
+                    overlay.style.display = 'none';
+                    document.removeEventListener('keydown', escHandler);
+                    if (promptKeyHandler) inputEl.removeEventListener('keydown', promptKeyHandler);
+                    resolve(result);
+                }
+
+                function escHandler(e) {
+                    if (e.key !== 'Escape') return;
+                    close(type === 'prompt' ? null : type === 'confirm' ? false : undefined);
+                }
+                document.addEventListener('keydown', escHandler);
+
+                if (type !== 'alert') {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.className   = 'modal-btn modal-btn-secondary';
+                    cancelBtn.textContent = cancelLabel;
+                    const cancelAction = () => {
+                        close(type === 'confirm' ? false : null);
+                    };
+                    cancelBtn.addEventListener('click', cancelAction);
+                    actionsEl.appendChild(cancelBtn);
+                }
+
+                const confirmBtn = document.createElement('button');
+                confirmBtn.type = 'button';
+                confirmBtn.className   = 'modal-btn ' + (danger ? 'modal-btn-danger' : 'modal-btn-primary');
+                confirmBtn.textContent = type === 'alert' ? 'OK' : confirmLabel;
+                const confirmAction = () => {
+                    if (type === 'prompt') close(inputEl.value);
+                    else if (type === 'confirm') close(true);
+                    else close(undefined);
+                };
+                confirmBtn.addEventListener('click', confirmAction);
+                actionsEl.appendChild(confirmBtn);
+
+                if (type === 'prompt') {
+                    promptKeyHandler = function handler(e) {
+                        if (e.key === 'Enter') { inputEl.removeEventListener('keydown', handler); confirmBtn.click(); }
+                    };
+                    inputEl.addEventListener('keydown', promptKeyHandler);
+                }
+            });
+        }
+
+        function isDesktopBrowser() {
+            const ua = navigator.userAgent || '';
+            const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+            const hasDesktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            return !isMobileUA && hasDesktopPointer;
+        }
+
+        function createEntityId(prefix, randomLength = 5) {
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 2 + randomLength)}`;
+        }
+
+        function pad2(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function buildVersionStamp(date = new Date()) {
+            const year = String(date.getFullYear()).slice(-2);
+            const month = pad2(date.getMonth() + 1);
+            const day = pad2(date.getDate());
+            const hours = pad2(date.getHours());
+            const minutes = pad2(date.getMinutes());
+            return `ver: ${year}.${month}.${day}.${hours}${minutes}`;
+        }
+
+        async function updateSettingsVersionFromGitHub() {
+            settingsVersion.textContent = 'ver: ---';
+            try {
+                const response = await fetch(GITHUB_REPO_API, {
+                    headers: { Accept: 'application/vnd.github+json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`GitHub API responded ${response.status}`);
+                }
+                const repoMeta = await response.json();
+                const pushedAt = typeof repoMeta?.pushed_at === 'string'
+                    ? new Date(repoMeta.pushed_at)
+                    : null;
+                if (pushedAt && !Number.isNaN(pushedAt.getTime())) {
+                    settingsVersion.textContent = buildVersionStamp(pushedAt);
+                    return;
+                }
+                settingsVersion.textContent = 'ver: ---';
+            } catch (error) {
+                console.warn('GitHub version timestamp unavailable; using placeholder.', error);
+                settingsVersion.textContent = 'ver: ---';
+            }
+        }
+
+        function hideAllActionVideos() {
+            actionVideos.forEach(video => {
+                video.pause();
+                video.style.display = 'none';
+            });
+        }
+
+        function setAnimationsEnabled(enabled) {
+            animationsEnabled = enabled;
+            localStorage.setItem(ANIMATIONS_KEY, String(enabled));
+            animationsToggle.checked = enabled;
+            if (!enabled) hideAllActionVideos();
+        }
+
+        setAnimationsEnabled(animationsEnabled);
+
+        function playActionVideo(videoToPlay) {
+            if (!animationsEnabled || !isDesktopBrowser()) return;
+            actionVideos.forEach(video => {
+                if (video !== videoToPlay) {
+                    video.pause();
+                    video.style.display = 'none';
+                }
+            });
+            videoToPlay.style.display = 'block';
+            videoToPlay.muted = true;
+            videoToPlay.volume = 0;
+            videoToPlay.currentTime = 0;
+            videoToPlay.play().catch(err => {
+                console.warn('Action video failed to play:', err);
+                videoToPlay.style.display = 'none';
+            });
+        }
+
+        function playRollbackVideo() {
+            playActionVideo(rollbackVideo);
+        }
+
+        function playCrushedVideo() {
+            playActionVideo(crushedVideo);
+        }
+
+        function playSummitVideo() {
+            playActionVideo(summitVideo);
+        }
+
+        actionVideos.forEach(video => {
+            video.addEventListener('ended', () => {
+                video.style.display = 'none';
+            });
+        });
+
+        settingsBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            settingsPanel.classList.toggle('open');
+        });
+        settingsPanel.addEventListener('click', e => e.stopPropagation());
+        document.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        animationsToggle.addEventListener('change', e => {
+            setAnimationsEnabled(e.target.checked);
+        });
+        updateSettingsVersionFromGitHub();
+        currentTaskListLabel.addEventListener('click', async () => {
+            if (!activeBoardId) return;
+            await renameBoard(activeBoardId);
+        });
+        function setSidebarExpanded(expanded) {
+            sidebar.classList.toggle('expanded', expanded);
+            document.body.classList.toggle('sidebar-expanded', expanded);
+        }
+
+        function insertColumnIntoBoard(columnElement, beforeElement = addColumnBtn) {
+            boardEl.insertBefore(columnElement, beforeElement);
+        }
+
+        function renderDefaultColumns() {
+            const defaultColumns = createDefaultColumns();
+            defaultColumns.forEach(column => {
+                const col = createColumnElement(
+                    column.id,
+                    column.name,
+                    column.tasks || [],
+                    column.completed || []
+                );
+                insertColumnIntoBoard(col);
+            });
+            saveBoard();
+        }
+
+        sidebarToggle.addEventListener('click', e => {
+            e.stopPropagation();
+            setSidebarExpanded(!sidebar.classList.contains('expanded'));
+        });
+        sidebar.addEventListener('click', () => {
+            if (!sidebar.classList.contains('expanded')) setSidebarExpanded(true);
+        });
+
+        function updateSidebarTopOnScroll() {
+            // Start aligned with the column area (80px), then grow upward as the page scrolls.
+            const top = Math.max(24, 80 - window.scrollY);
+            sidebar.style.top = top + 'px';
+        }
+
+        function syncSidebarHorizontalPosition() {
+            // Sidebar should move with page content horizontally (not remain viewport-fixed).
+            sidebar.style.transform = `translateX(${-window.scrollX}px)`;
+        }
+
+        function syncTopBarHorizontalPosition() {
+            topBar.style.transform = `translateX(${window.scrollX}px)`;
+        }
+
+        window.addEventListener('scroll', updateSidebarTopOnScroll, { passive: true });
+        window.addEventListener('scroll', syncTopBarHorizontalPosition, { passive: true });
+        window.addEventListener('scroll', syncSidebarHorizontalPosition, { passive: true });
+        window.addEventListener('resize', updateSidebarTopOnScroll);
+        window.addEventListener('resize', syncTopBarHorizontalPosition);
+        window.addEventListener('resize', syncSidebarHorizontalPosition);
+        updateSidebarTopOnScroll();
+        syncTopBarHorizontalPosition();
+        syncSidebarHorizontalPosition();
+
+        setSidebarExpanded(sidebar.classList.contains('expanded'));
+
+        // ── Placeholder rotation ──────────────────────────────────────
+        const PLACEHOLDERS = [
+            "Add to your burdens...",
+            "What fresh torment awaits?",
+            "Name your boulder...",
+            "Another rock to push?",
+            "Describe your eternal task...",
+            "The mountain demands more\u2026",
+            "Your next uphill battle...",
+            "Resistance is futile\u2026",
+            "On a roll? Add it here.",
+            "Lift it or live with it...",
+            "Press on, Sisyphus...",
+            "Rock and a hard place?",
+            "Push come to shove...",
+            "Feeling boulder today?",
+            "Time to toil?",
+            "Prometheus had it worse\u2026",
+            "The gods demand it...",
+            "Hades is watching...",
+            "The summit awaits...",
+            "Up the hill again?",
+            "Back to the grind?",
+            "What did fate decree?",
+            "The mountain is patient...",
+            "Uphill from here...",
+            "Another eternal rep?",
+            "Unearth your next task...",
+            "Hit rock bottom? Push up.",
+            "Rolling with it?",
+            "No rest for the wicked...",
+            "What must be endured?",
+            "Sweat now, sweat later...",
+            "What grinds you down?",
+            "The toil must go on...",
+            "Name your next ordeal..."
+        ];
+
+        function startPlaceholderRotation(input) {
+            let lastIndex = -1;
+            function setRandom() {
+                let index;
+                do { index = Math.floor(Math.random() * PLACEHOLDERS.length); }
+                while (index === lastIndex);
+                input.placeholder = PLACEHOLDERS[index];
+                lastIndex = index;
+            }
+            setRandom();
+            // Store the interval ID so it can be cancelled when the column is deleted
+            input._intervalId = setInterval(setRandom, 120000);
+            input._rotatePlaceholder = setRandom;
+        }
+
+        // ── Firestore save / load ─────────────────────────────────────
+        function boardStoreRef() {
+            return doc(db, 'users', currentUser.uid, 'board', LEGACY_BOARD_DOC_ID);
+        }
+
+        function localStoreKey() {
+            return currentUser
+                ? `sisyphus_board_store_${currentUser.uid}`
+                : 'sisyphus_board_store_guest';
+        }
+
+        function readLocalStore() {
+            try {
+                const raw = localStorage.getItem(localStoreKey());
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function writeLocalStore(patch) {
+            try {
+                const current = readLocalStore();
+                localStorage.setItem(localStoreKey(), JSON.stringify({ ...current, ...patch }));
+            } catch {
+                // Ignore localStorage failures.
+            }
+        }
+
+        function normalizeUpdatedAt(value) {
+            const asNumber = Number(value);
+            return Number.isFinite(asNumber) && asNumber > 0 ? asNumber : 0;
+        }
+
+        function readColumnsByBoardMap(storeData) {
+            const map = storeData && typeof storeData === 'object' ? storeData.columnsByBoard : null;
+            return map && typeof map === 'object' ? map : {};
+        }
+
+        function readColumnsMetaByBoardMap(storeData) {
+            const map = storeData && typeof storeData === 'object' ? storeData.columnsMetaByBoard : null;
+            return map && typeof map === 'object' ? map : {};
+        }
+
+        function readBoardState(storeData, boardId) {
+            const columnsByBoard = readColumnsByBoardMap(storeData);
+            const columnsMetaByBoard = readColumnsMetaByBoardMap(storeData);
+            const rawMeta = columnsMetaByBoard[boardId];
+            return {
+                columns: columnsByBoard[boardId],
+                meta: {
+                    updatedAt: normalizeUpdatedAt(rawMeta && rawMeta.updatedAt),
+                    dirty: !!(rawMeta && rawMeta.dirty)
+                }
+            };
+        }
+
+        function shouldPreferLocalColumns(localState, remoteState) {
+            if (!Array.isArray(localState.columns)) return false;
+            if (!Array.isArray(remoteState.columns)) return true;
+            if (localState.meta.dirty && localState.meta.updatedAt >= remoteState.meta.updatedAt) return true;
+            return localState.meta.updatedAt > remoteState.meta.updatedAt;
+        }
+
+        function queueDirtyLocalBoardsForSync(remoteData = boardStoreCache || {}) {
+            if (!currentUser || !Array.isArray(boardList) || boardList.length === 0) return;
+            const localSnapshot = readLocalStore();
+            for (const board of boardList) {
+                const boardId = board && board.id;
+                if (!boardId) continue;
+                const localState = readBoardState(localSnapshot, boardId);
+                if (!localState.meta.dirty || !Array.isArray(localState.columns)) continue;
+                const remoteState = readBoardState(remoteData, boardId);
+                if (shouldPreferLocalColumns(localState, remoteState)) {
+                    commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                }
+            }
+        }
+
+        async function getBoardStoreData() {
+            if (boardStoreCache) return boardStoreCache;
+            const snap = await getDoc(boardStoreRef());
+            boardStoreCache = snap.exists() ? snap.data() : {};
+            return boardStoreCache;
+        }
+
+        function collectBoardColumns() {
+            const columns = [];
+            document.querySelectorAll('.column').forEach(col => {
+                const tasks = [];
+                const completed = [];
+                col.querySelectorAll('.task-list .task-card span').forEach(s => tasks.push(s.textContent));
+                col.querySelectorAll('.completed-list .task-card span').forEach(s => completed.push(s.textContent));
+                columns.push({
+                    id: col.dataset.id,
+                    name: col.querySelector('.column-title').value,
+                    tasks,
+                    completed
+                });
+            });
+            return columns;
+        }
+
+        function persistLocalBoardColumns(boardId, columns, options = {}) {
+            if (!boardId || !Array.isArray(columns)) return 0;
+            const updatedAt = normalizeUpdatedAt(options.updatedAt) || Date.now();
+            const dirty = options.dirty !== false;
+            const local = readLocalStore();
+            writeLocalStore({
+                columnsByBoard: { ...(local.columnsByBoard || {}), [boardId]: columns },
+                columnsMetaByBoard: {
+                    ...(local.columnsMetaByBoard || {}),
+                    [boardId]: { updatedAt, dirty }
+                }
+            });
+            return updatedAt;
+        }
+
+        function markLocalBoardCleanIfCurrent(boardId, updatedAt) {
+            if (!boardId) return;
+            const expected = normalizeUpdatedAt(updatedAt);
+            if (!expected) return;
+            const local = readLocalStore();
+            const columnsMetaByBoard = { ...(local.columnsMetaByBoard || {}) };
+            const rawMeta = columnsMetaByBoard[boardId];
+            if (!rawMeta) return;
+            if (normalizeUpdatedAt(rawMeta.updatedAt) !== expected) return;
+            columnsMetaByBoard[boardId] = {
+                ...rawMeta,
+                updatedAt: expected,
+                dirty: false
+            };
+            writeLocalStore({ columnsMetaByBoard });
+        }
+
+        async function persistBoardColumns(boardId, columns, updatedAt) {
+            if (!currentUser || !boardId) return;
+            const version = normalizeUpdatedAt(updatedAt) || Date.now();
+            try {
+                await setDoc(
+                    boardStoreRef(),
+                    {
+                        columnsByBoard: { [boardId]: columns },
+                        columnsMetaByBoard: { [boardId]: { updatedAt: version } }
+                    },
+                    { merge: true }
+                );
+                markLocalBoardCleanIfCurrent(boardId, version);
+            } catch (e) {
+                console.error('Save failed:', e);
+            }
+        }
+
+        // ── Save queue + debounce ─────────────────────────────────────
+        let saveBoardTimer = null;
+        const SAVE_DEBOUNCE_MS = 400;
+        let latestSaveVersion = 0;
+
+        function nextSaveVersion() {
+            const now = Date.now();
+            latestSaveVersion = Math.max(now, latestSaveVersion + 1);
+            return latestSaveVersion;
+        }
+
+        // Immediately enqueue a Firestore write — called by the debounce timer
+        // and by flush paths (sign-out, tab close, board switch).
+        function commitSaveNow(boardId = activeBoardId, columns = null, updatedAt = null) {
+            if (!currentUser || !boardId) return;
+            const columnsToPersist = Array.isArray(columns) ? columns : collectBoardColumns();
+            const version = normalizeUpdatedAt(updatedAt) || nextSaveVersion();
+            persistLocalBoardColumns(boardId, columnsToPersist, { updatedAt: version, dirty: true });
+            const priorSave = savePromise || Promise.resolve();
+            const nextSave = priorSave
+                .catch(() => {
+                    // Keep the queue alive even if a previous save failed.
+                })
+                .then(() => persistBoardColumns(boardId, columnsToPersist, version));
+            savePromise = nextSave.finally(() => {
+                if (savePromise === nextSave) savePromise = null;
+            });
+        }
+
+        // Debounced entry point — all user actions call this.
+        // Batches rapid successive changes into a single write.
+        function saveBoard() {
+            if (!currentUser || !activeBoardId) return;
+            clearTimeout(saveBoardTimer);
+            saveBoardTimer = setTimeout(() => {
+                saveBoardTimer = null;
+                commitSaveNow();
+            }, SAVE_DEBOUNCE_MS);
+        }
+
+        async function flushPendingSave() {
+            // Fire the debounce immediately if one is queued, then await the write.
+            if (saveBoardTimer !== null) {
+                clearTimeout(saveBoardTimer);
+                saveBoardTimer = null;
+                commitSaveNow();
+            }
+            const pending = savePromise;
+            if (!pending) return;
+            try { await pending; }
+            finally {
+                if (savePromise === pending) savePromise = null;
+            }
+        }
+
+        async function flushPendingSaveWithTimeout(timeoutMs = 1500) {
+            if (!savePromise && saveBoardTimer === null) return;
+            let timedOut = false;
+            await Promise.race([
+                flushPendingSave(),
+                new Promise(resolve => {
+                    setTimeout(() => {
+                        timedOut = true;
+                        resolve();
+                    }, timeoutMs);
+                })
+            ]);
+            if (timedOut) {
+                console.warn('Proceeding without waiting for pending save to finish.');
+            }
+        }
+
+        function cleanupColumns() {
+            document.querySelectorAll('.column').forEach(col => {
+                col.querySelectorAll('.task-input').forEach(input => {
+                    if (input._intervalId) clearInterval(input._intervalId);
+                });
+                col.remove();
+            });
+        }
+
+        function randomItem(items) {
+            return items[Math.floor(Math.random() * items.length)];
+        }
+
+        function createDefaultColumns() {
+            return DEFAULT_MOUNTAINS.map(name => ({
+                id: createEntityId('col'),
+                name,
+                tasks: [],
+                completed: []
+            }));
+        }
+
+        function generateBoardProfile() {
+            const aliases = ['Atlas', 'Nyx', 'Orion', 'Echo', 'Helios', 'Gaia', 'Astra', 'Rhea'];
+            const roles = ['Stone Pusher', 'Slope Runner', 'Peak Chaser', 'Path Climber', 'Summit Seeker'];
+            const tag = Math.random().toString(36).slice(2, 6).toUpperCase();
+            return {
+                alias: randomItem(aliases),
+                role: randomItem(roles),
+                tag
+            };
+        }
+
+        function nextTaskListName() {
+            const nextNum = boardList.length + 1;
+            return `Gaia ${nextNum}`;
+        }
+
+        function createBoardMeta(name = nextTaskListName()) {
+            return {
+                id: createEntityId('board'),
+                name,
+                profile: generateBoardProfile()
+            };
+        }
+
+        async function persistBoardsIndex() {
+            if (!currentUser) return;
+            writeLocalStore({ boards: boardList });
+            try {
+                await setDoc(boardStoreRef(), { boards: boardList }, { merge: true });
+            } catch (e) {
+                console.error('Saving board index failed:', e);
+            }
+        }
+
+        function findActiveBoardMeta() {
+            return boardList.find(b => b.id === activeBoardId) || null;
+        }
+
+        async function renameBoard(boardId) {
+            const board = boardList.find(b => b.id === boardId);
+            if (!board) return;
+            const proposed = await showModal({
+                type: 'prompt',
+                title: 'Rename World',
+                defaultValue: board.name || '',
+                placeholder: 'Enter a new name…',
+                confirmLabel: 'Rename'
+            });
+            if (proposed === null) return;
+            const name = proposed.trim();
+            if (!name) {
+                await showModal({ type: 'alert', title: 'Invalid Name', message: 'Task list name cannot be empty.' });
+                return;
+            }
+            board.name = name.slice(0, 100);
+            await persistBoardsIndex();
+            renderTaskListNav();
+        }
+
+        async function reorderBoardList(draggedId, rawInsertIndex) {
+            if (!draggedId) return;
+            const fromIndex = boardList.findIndex(b => b.id === draggedId);
+            if (fromIndex === -1 || boardList.length <= 1) return;
+            const totalBoards = boardList.length;
+            let insertIndex = Number(rawInsertIndex);
+            if (!Number.isInteger(insertIndex)) return;
+            if (insertIndex < 0) insertIndex = 0;
+            if (insertIndex > totalBoards) insertIndex = totalBoards;
+            // Dropping directly before or after itself does not change order.
+            if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
+
+            const [moved] = boardList.splice(fromIndex, 1);
+            const adjustedIndex = insertIndex > fromIndex ? insertIndex - 1 : insertIndex;
+            boardList.splice(adjustedIndex, 0, moved);
+            await persistBoardsIndex();
+            renderTaskListNav();
+        }
+
+        function getTaskListDropZones() {
+            return Array.from(taskListNav.querySelectorAll('.task-list-drop-zone'));
+        }
+
+        function getNearestTaskListDropZone(clientY) {
+            const zones = getTaskListDropZones();
+            if (zones.length === 0) return null;
+            let nearest = zones[0];
+            let nearestDistance = Number.POSITIVE_INFINITY;
+            zones.forEach(zone => {
+                const rect = zone.getBoundingClientRect();
+                const centerY = rect.top + rect.height / 2;
+                const distance = Math.abs(clientY - centerY);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearest = zone;
+                }
+            });
+            return nearest;
+        }
+
+        function activateNearestTaskListDropZone(clientY) {
+            const nearest = getNearestTaskListDropZone(clientY);
+            getTaskListDropZones().forEach(zone => zone.classList.remove('active'));
+            if (nearest) nearest.classList.add('active');
+            return nearest;
+        }
+
+        function createTaskListDropZone(insertIndex) {
+            const zone = document.createElement('div');
+            zone.className = 'task-list-drop-zone';
+            zone.dataset.insertIndex = String(insertIndex);
+
+            zone.addEventListener('dragover', e => {
+                if (!draggedTaskListId) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                activateNearestTaskListDropZone(e.clientY);
+            });
+
+            zone.addEventListener('dragleave', e => {
+                if (!zone.contains(e.relatedTarget)) zone.classList.remove('active');
+            });
+
+            zone.addEventListener('drop', async e => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('active');
+                const movingId = draggedTaskListId;
+                if (!movingId) return;
+                taskListNav.classList.remove('task-list-dragging');
+                taskListNav.querySelectorAll('.task-list-drop-zone').forEach(el => el.classList.remove('active'));
+                await reorderBoardList(movingId, insertIndex);
+            });
+
+            return zone;
+        }
+
+        taskListNav.addEventListener('dragover', e => {
+            if (!draggedTaskListId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            activateNearestTaskListDropZone(e.clientY);
+        });
+
+        taskListNav.addEventListener('drop', async e => {
+            if (!draggedTaskListId) return;
+            e.preventDefault();
+            const movingId = draggedTaskListId;
+            const nearestZone = activateNearestTaskListDropZone(e.clientY);
+            const fallbackZone = nearestZone || getNearestTaskListDropZone(e.clientY);
+            const insertIndex = Number(fallbackZone && fallbackZone.dataset.insertIndex);
+            if (!Number.isInteger(insertIndex)) return;
+
+            taskListNav.classList.remove('task-list-dragging');
+            taskListNav.querySelectorAll('.task-list-drop-zone').forEach(zone => zone.classList.remove('active'));
+            await reorderBoardList(movingId, insertIndex);
+        });
+
+        async function deleteBoardList(boardId) {
+            const board = boardList.find(b => b.id === boardId);
+            if (!board) return;
+            if (boardList.length <= 1) {
+                await showModal({ type: 'alert', title: 'Cannot Delete', message: 'You need at least one world. Create another before deleting this one.' });
+                return;
+            }
+            const confirmed = await showModal({
+                type: 'confirm',
+                title: 'Delete World',
+                message: `Delete "${board.name}"? This action cannot be undone.`,
+                confirmLabel: 'Delete',
+                danger: true
+            });
+            if (!confirmed) return;
+
+            const removedIndex = boardList.findIndex(b => b.id === boardId);
+            boardList = boardList.filter(b => b.id !== boardId);
+            pendingBoardCreates.delete(boardId);
+
+            const local = readLocalStore();
+            if (local.columnsByBoard && typeof local.columnsByBoard === 'object') {
+                delete local.columnsByBoard[boardId];
+            }
+            if (local.columnsMetaByBoard && typeof local.columnsMetaByBoard === 'object') {
+                delete local.columnsMetaByBoard[boardId];
+            }
+            writeLocalStore({
+                columnsByBoard: local.columnsByBoard || {},
+                columnsMetaByBoard: local.columnsMetaByBoard || {}
+            });
+
+            if (activeBoardId === boardId) {
+                const fallbackIndex = Math.max(0, removedIndex - 1);
+                const fallbackBoard = boardList[fallbackIndex] || boardList[0];
+                if (fallbackBoard) {
+                    activeBoardId = fallbackBoard.id;
+                    await loadBoard(fallbackBoard.id);
+                } else {
+                    cleanupColumns();
+                    activeBoardId = null;
+                }
+            }
+            renderTaskListNav();
+
+            // Persist deletions in background so UI never waits on network.
+            persistBoardsIndex().catch(e => {
+                console.warn('Could not persist board index after deletion:', e);
+            });
+            setDoc(
+                boardStoreRef(),
+                {
+                    columnsByBoard: { [boardId]: deleteField() },
+                    columnsMetaByBoard: { [boardId]: deleteField() }
+                },
+                { merge: true }
+            ).catch(e => {
+                console.warn('Could not delete task list document:', e);
+            });
+        }
+
+        function updateBoardUserInfo() {
+            const activeBoard = findActiveBoardMeta();
+            if (!activeBoard) {
+                currentTaskListLabel.textContent = '';
+                currentTaskListLabel.removeAttribute('data-tooltip');
+                return;
+            }
+            const profile = activeBoard.profile || {};
+            const alias = profile.alias || 'Sisyphus';
+            const role = profile.role || 'Stone Pusher';
+            const tag = profile.tag || '0000';
+            currentTaskListLabel.textContent = activeBoard.name || '';
+            currentTaskListLabel.dataset.tooltip = `Click to rename task list (${alias} / ${role} #${tag})`;
+        }
+
+        function renderTaskListNav() {
+            taskListNav.innerHTML = '';
+            boardList.forEach((board, index) => {
+                taskListNav.appendChild(createTaskListDropZone(index));
+
+                // Use a <div> rather than <button> — a <button> cannot legally contain
+                // other <button>s (interactive content nesting is invalid HTML).
+                // tabIndex + keydown restore keyboard accessibility for board switching.
+                const item = document.createElement('div');
+                item.tabIndex = 0;
+                item.setAttribute('role', 'button');
+                item.className = 'task-list-item' + (board.id === activeBoardId ? ' active' : '');
+                item.draggable = false;
+                item.dataset.boardId = board.id;
+                item.innerHTML = `
+                    <span class="task-list-head">
+                        <span class="task-list-name"></span>
+                        <span class="task-list-actions">
+                            <button class="rename-list-btn" type="button" data-tooltip="Rename task list">Aa</button>
+                            <button class="delete-list-btn" type="button" data-tooltip="Delete task list">×</button>
+                        </span>
+                    </span>
+                `;
+                item.querySelector('.task-list-name').textContent = board.name || 'Gaia';
+                const renameBtn = item.querySelector('.rename-list-btn');
+                const deleteBtn = item.querySelector('.delete-list-btn');
+                const suppressActionDrag = e => {
+                    item.draggable = false;
+                    e.stopPropagation();
+                };
+
+                renameBtn.addEventListener('mousedown', suppressActionDrag);
+                deleteBtn.addEventListener('mousedown', suppressActionDrag);
+
+                renameBtn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    await renameBoard(board.id);
+                });
+                deleteBtn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    await deleteBoardList(board.id);
+                });
+
+                item.addEventListener('mousedown', e => {
+                    if (e.button !== 0) return;
+                    if (e.target.closest('.task-list-actions')) return;
+                    item.draggable = true;
+                });
+                item.addEventListener('mouseup', () => {
+                    if (!draggedTaskListId) item.draggable = false;
+                });
+                item.addEventListener('mouseleave', () => {
+                    if (!draggedTaskListId) item.draggable = false;
+                });
+                item.addEventListener('dragstart', e => {
+                    if (!item.draggable) {
+                        e.preventDefault();
+                        return;
+                    }
+                    draggedTaskListId = board.id;
+                    taskListNav.classList.add('task-list-dragging');
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', board.id);
+                });
+                item.addEventListener('dragend', () => {
+                    draggedTaskListId = null;
+                    item.draggable = false;
+                    taskListNav.classList.remove('task-list-dragging');
+                    item.classList.remove('dragging');
+                    taskListNav.querySelectorAll('.task-list-drop-zone').forEach(el => el.classList.remove('active'));
+                });
+                item.addEventListener('click', async () => {
+                    if (board.id === activeBoardId) return;
+                    await switchToBoard(board.id);
+                });
+                item.addEventListener('keydown', async e => {
+                    // Ignore key events originating from nested controls (rename/delete buttons).
+                    if (e.target !== item) return;
+                    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+                    e.preventDefault();
+                    if (board.id === activeBoardId) return;
+                    await switchToBoard(board.id);
+                });
+                taskListNav.appendChild(item);
+            });
+            if (boardList.length > 0) {
+                taskListNav.appendChild(createTaskListDropZone(boardList.length));
+            }
+            updateBoardUserInfo();
+        }
+
+        function renderColumnsForBoard(columns) {
+            if (Array.isArray(columns) && columns.length > 0) {
+                columns.forEach(c => {
+                    const col = createColumnElement(c.id, c.name, c.tasks || [], c.completed || []);
+                    insertColumnIntoBoard(col);
+                });
+                return;
+            }
+            renderDefaultColumns();
+        }
+
+        function normalizeBoards(boards) {
+            if (!Array.isArray(boards)) return [];
+            return boards
+                .filter(board => board && typeof board === 'object' && typeof board.id === 'string')
+                .map(board => ({
+                    id: board.id,
+                    name: board.name || 'Gaia',
+                    profile: board.profile || generateBoardProfile()
+                }));
+        }
+
+        function subscribeBoardStore() {
+            if (!currentUser) return;
+            if (unsubscribeBoardStore) unsubscribeBoardStore();
+            unsubscribeBoardStore = onSnapshot(
+                boardStoreRef(),
+                snap => {
+                    boardStoreCache = snap.exists() ? snap.data() : {};
+                    const remoteBoards = normalizeBoards(boardStoreCache.boards);
+                    if (remoteBoards.length > 0) {
+                        const remoteIds = new Set(remoteBoards.map(b => b.id));
+                        pendingBoardCreates.forEach(id => {
+                            if (remoteIds.has(id)) pendingBoardCreates.delete(id);
+                        });
+                        const pendingLocalBoards = boardList.filter(
+                            board => pendingBoardCreates.has(board.id) && !remoteIds.has(board.id)
+                        );
+                        const effectiveBoards = pendingLocalBoards.length > 0
+                            ? [...remoteBoards, ...pendingLocalBoards]
+                            : remoteBoards;
+                        const remoteSig = JSON.stringify(effectiveBoards.map(b => ({ id: b.id, name: b.name })));
+                        const localSig = JSON.stringify(boardList.map(b => ({ id: b.id, name: b.name })));
+                        if (remoteSig !== localSig) {
+                            boardList = effectiveBoards;
+                        }
+                    }
+
+                    if (!boardList.length) return;
+                    if (!activeBoardId || !boardList.some(b => b.id === activeBoardId)) {
+                        activeBoardId = boardList[0].id;
+                    }
+
+                    if (!savePromise) {
+                        const localSnapshot = readLocalStore();
+                        const remoteState = readBoardState(boardStoreCache, activeBoardId);
+                        const localState = readBoardState(localSnapshot, activeBoardId);
+
+                        if (shouldPreferLocalColumns(localState, remoteState)) {
+                            if (localState.meta.dirty && Array.isArray(localState.columns)) {
+                                commitSaveNow(activeBoardId, localState.columns, localState.meta.updatedAt);
+                            }
+                        } else if (Array.isArray(remoteState.columns)) {
+                            const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
+                            persistLocalBoardColumns(
+                                activeBoardId,
+                                remoteState.columns,
+                                { updatedAt: remoteVersion, dirty: false }
+                            );
+                            const localColumns = collectBoardColumns();
+                            if (JSON.stringify(localColumns) !== JSON.stringify(remoteState.columns)) {
+                                cleanupColumns();
+                                renderColumnsForBoard(remoteState.columns);
+                            }
+                        }
+                    }
+                    renderTaskListNav();
+                },
+                e => {
+                    console.error('Live sync failed:', e);
+                }
+            );
+        }
+
+        function unsubscribeBoardStoreListener() {
+            if (!unsubscribeBoardStore) return;
+            unsubscribeBoardStore();
+            unsubscribeBoardStore = null;
+        }
+
+        async function loadBoard(boardId) {
+            cleanupColumns();
+            activeBoardId = boardId;
+            try {
+                const data = await getBoardStoreData();
+                const localSnapshot = readLocalStore();
+                const remoteState = readBoardState(data, boardId);
+                const localState = readBoardState(localSnapshot, boardId);
+
+                let columnsToRender = null;
+                if (shouldPreferLocalColumns(localState, remoteState)) {
+                    columnsToRender = localState.columns;
+                    if (localState.meta.dirty && Array.isArray(localState.columns)) {
+                        commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                    }
+                } else if (Array.isArray(remoteState.columns)) {
+                    columnsToRender = remoteState.columns;
+                    const remoteVersion = remoteState.meta.updatedAt || nextSaveVersion();
+                    persistLocalBoardColumns(
+                        boardId,
+                        remoteState.columns,
+                        { updatedAt: remoteVersion, dirty: false }
+                    );
+                } else if (Array.isArray(localState.columns)) {
+                    columnsToRender = localState.columns;
+                    if (localState.meta.dirty) {
+                        commitSaveNow(boardId, localState.columns, localState.meta.updatedAt);
+                    }
+                }
+
+                renderColumnsForBoard(columnsToRender);
+            } catch (e) {
+                console.error('Load failed:', e);
+                const local = readLocalStore();
+                const localState = readBoardState(local, boardId);
+                if (Array.isArray(localState.columns) && localState.columns.length > 0) {
+                    renderColumnsForBoard(localState.columns);
+                } else {
+                    renderDefaultColumns();
+                }
+            }
+        }
+
+        async function switchToBoard(boardId) {
+            if (!currentUser || !boardId) return;
+            await flushPendingSave();
+            await loadBoard(boardId);
+            renderTaskListNav();
+        }
+
+        async function createTaskList() {
+            if (!currentUser) {
+                await showModal({ type: 'alert', title: 'Not Signed In', message: 'Please sign in again before creating a new world.' });
+                return;
+            }
+            newTaskListBtn.disabled = true;
+            try {
+                await flushPendingSaveWithTimeout();
+                const defaultColumns = createDefaultColumns();
+                const newBoard = createBoardMeta();
+                boardList.push(newBoard);
+                pendingBoardCreates.add(newBoard.id);
+                renderTaskListNav();
+                await loadBoard(newBoard.id);
+                const seedVersion = nextSaveVersion();
+                try {
+                    await setDoc(
+                        boardStoreRef(),
+                        {
+                            columnsByBoard: { [newBoard.id]: defaultColumns },
+                            columnsMetaByBoard: { [newBoard.id]: { updatedAt: seedVersion } }
+                        },
+                        { merge: true }
+                    );
+                    persistLocalBoardColumns(
+                        newBoard.id,
+                        defaultColumns,
+                        { updatedAt: seedVersion, dirty: false }
+                    );
+                } catch (e) {
+                    console.warn('Could not pre-seed default columns for new task list:', e);
+                    persistLocalBoardColumns(
+                        newBoard.id,
+                        defaultColumns,
+                        { updatedAt: seedVersion, dirty: true }
+                    );
+                }
+                await persistBoardsIndex();
+                renderTaskListNav();
+            } catch (e) {
+                console.error('Failed to create task list:', e);
+                await showModal({ type: 'alert', title: 'Error', message: 'Could not create a new world right now. Please try again.' });
+            } finally {
+                newTaskListBtn.disabled = false;
+            }
+        }
+
+        async function initializeBoards() {
+            try {
+                const data = await getBoardStoreData();
+                const local = readLocalStore();
+                const boardsSource = Array.isArray(data.boards) && data.boards.length > 0
+                    ? data.boards
+                    : null;
+                if (boardsSource && boardsSource.length > 0) {
+                    const remoteBoards = normalizeBoards(boardsSource);
+                    const localBoards = Array.isArray(local.boards) ? normalizeBoards(local.boards) : [];
+                    const remoteIds = new Set(remoteBoards.map(board => board.id));
+                    const localOnlyBoards = localBoards.filter(board => {
+                        if (remoteIds.has(board.id)) return false;
+                        const localState = readBoardState(local, board.id);
+                        return Array.isArray(localState.columns) || localState.meta.dirty;
+                    });
+                    boardList = localOnlyBoards.length > 0
+                        ? [...remoteBoards, ...localOnlyBoards]
+                        : remoteBoards;
+                    if (localOnlyBoards.length > 0) {
+                        // Promote locally-created boards that never made it to cloud.
+                        await persistBoardsIndex();
+                    }
+                } else if (Array.isArray(local.boards) && local.boards.length > 0) {
+                    // One-time recovery path: promote local cache to cloud if remote index is empty.
+                    boardList = normalizeBoards(local.boards);
+                    await persistBoardsIndex();
+                    const localColumnsByBoard = local.columnsByBoard && typeof local.columnsByBoard === 'object'
+                        ? local.columnsByBoard
+                        : {};
+                    const localColumnsMetaByBoard = local.columnsMetaByBoard && typeof local.columnsMetaByBoard === 'object'
+                        ? local.columnsMetaByBoard
+                        : {};
+                    for (const board of boardList) {
+                        const cachedCols = localColumnsByBoard[board.id];
+                        if (Array.isArray(cachedCols)) {
+                            const cachedMeta = localColumnsMetaByBoard[board.id];
+                            const cachedUpdatedAt = normalizeUpdatedAt(cachedMeta && cachedMeta.updatedAt) || nextSaveVersion();
+                            await setDoc(
+                                boardStoreRef(),
+                                {
+                                    columnsByBoard: { [board.id]: cachedCols },
+                                    columnsMetaByBoard: { [board.id]: { updatedAt: cachedUpdatedAt } }
+                                },
+                                { merge: true }
+                            );
+                            markLocalBoardCleanIfCurrent(board.id, cachedUpdatedAt);
+                        }
+                    }
+                } else {
+                    // Migration path: if legacy single-board data exists, seed Gaia 1 from it.
+                    const seededColumns = Array.isArray(data.columns)
+                        ? data.columns
+                        : createDefaultColumns();
+                    boardList = [createBoardMeta('Gaia 1')];
+                    const seedVersion = nextSaveVersion();
+                    try {
+                        await setDoc(
+                            boardStoreRef(),
+                            {
+                                columnsByBoard: { [boardList[0].id]: seededColumns },
+                                columnsMetaByBoard: { [boardList[0].id]: { updatedAt: seedVersion } }
+                            },
+                            { merge: true }
+                        );
+                        persistLocalBoardColumns(
+                            boardList[0].id,
+                            seededColumns,
+                            { updatedAt: seedVersion, dirty: false }
+                        );
+                    } catch (e) {
+                        console.warn('Could not pre-seed first task list:', e);
+                        persistLocalBoardColumns(
+                            boardList[0].id,
+                            seededColumns,
+                            { updatedAt: seedVersion, dirty: true }
+                        );
+                    }
+                    writeLocalStore({
+                        boards: boardList
+                    });
+                    await persistBoardsIndex();
+                }
+
+                queueDirtyLocalBoardsForSync(data);
+                const preferredBoard = activeBoardId && boardList.some(b => b.id === activeBoardId)
+                    ? activeBoardId
+                    : boardList[0].id;
+                await loadBoard(preferredBoard);
+                renderTaskListNav();
+            } catch (e) {
+                console.error('Board initialization failed:', e);
+                // Ensure first-time users always land on Gaia 1, even if remote init fails.
+                if (!boardList.length) {
+                    boardList = [createBoardMeta('Gaia 1')];
+                }
+                await loadBoard(boardList[0].id);
+                renderTaskListNav();
+            }
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────
+        function updateDivider(col) {
+            const hasCompleted = col.querySelector('.completed-list').children.length > 0;
+            col.querySelector('.completed-divider').classList.toggle('visible', hasCompleted);
+        }
+
+        function createTaskCard(text, done = false) {
+            const li = document.createElement('li');
+            li.className = 'task-card' + (done ? ' done' : '');
+            li.draggable = true;
+
+            // Use textContent (never innerHTML) for user-supplied text to prevent XSS
+            const span = document.createElement('span');
+            span.textContent = text;
+
+            const doneBtn = document.createElement('button');
+            doneBtn.className = done ? 'done-btn undo' : 'done-btn';
+            doneBtn.textContent = done ? 'It Rolled Back' : 'Summit!';
+            doneBtn.addEventListener('click', () => toggleDone(li));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-task-btn';
+            deleteBtn.textContent = 'Drop It';
+            deleteBtn.addEventListener('click', () => deleteTask(li));
+
+            const buttons = document.createElement('div');
+            buttons.className = 'card-buttons';
+            buttons.appendChild(doneBtn);
+            buttons.appendChild(deleteBtn);
+
+            li.appendChild(span);
+            li.appendChild(buttons);
+            span.dataset.tooltip = 'Click to edit task';
+            span.addEventListener('click', e => {
+                e.stopPropagation();
+                beginInlineTaskEdit(li);
+            });
+
+            li.addEventListener('dragstart', e => {
+                draggedCard = li;
+                li.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            li.addEventListener('dragend', () => {
+                li.classList.remove('dragging');
+                document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+            });
+            return li;
+        }
+
+        function beginInlineTaskEdit(card) {
+            if (!card || card.dataset.inlineEditing === 'true') return;
+            const textEl = card.querySelector('span');
+            if (!textEl) return;
+
+            const originalText = textEl.textContent || '';
+            const wasDraggable = card.draggable;
+            card.dataset.inlineEditing = 'true';
+            card.classList.add('editing');
+            card.draggable = false;
+            textEl.setAttribute('contenteditable', 'true');
+            textEl.spellcheck = true;
+            textEl.focus();
+
+            const selection = window.getSelection();
+            if (selection) {
+                const range = document.createRange();
+                range.selectNodeContents(textEl);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+            let cancelled = false;
+            const finish = () => {
+                textEl.removeEventListener('keydown', onKeydown);
+                textEl.removeEventListener('blur', onBlur);
+                textEl.removeAttribute('contenteditable');
+                textEl.spellcheck = false;
+                card.classList.remove('editing');
+                card.draggable = wasDraggable;
+                delete card.dataset.inlineEditing;
+
+                if (cancelled) {
+                    textEl.textContent = originalText;
+                    return;
+                }
+
+                let nextText = (textEl.textContent || '').trim();
+                if (!nextText) {
+                    textEl.textContent = originalText;
+                    return;
+                }
+                if (nextText.length > 500) {
+                    nextText = nextText.slice(0, 500);
+                }
+                textEl.textContent = nextText;
+                if (nextText !== originalText) saveBoard();
+            };
+
+            const onKeydown = e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    textEl.blur();
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelled = true;
+                    textEl.blur();
+                }
+            };
+
+            const onBlur = () => finish();
+            textEl.addEventListener('keydown', onKeydown);
+            textEl.addEventListener('blur', onBlur);
+        }
+
+        // ── Column drop zones ─────────────────────────────────────────
+        function makeDropZone() {
+            const zone = document.createElement('div');
+            zone.className = 'col-drop-zone';
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                document.querySelectorAll('.col-drop-zone').forEach(z => z.classList.remove('active'));
+                zone.classList.add('active');
+                activeDropZone = zone;
+            });
+            zone.addEventListener('dragleave', () => zone.classList.remove('active'));
+            zone.addEventListener('drop', e => e.preventDefault());
+            return zone;
+        }
+
+        function showDropZones() {
+            boardEl.querySelectorAll('.column').forEach(col => boardEl.insertBefore(makeDropZone(), col));
+            insertColumnIntoBoard(makeDropZone());
+        }
+
+        function hideDropZones() {
+            document.querySelectorAll('.col-drop-zone').forEach(z => z.remove());
+            activeDropZone = null;
+        }
+
+        function createColumnElement(id, name, tasks = [], completed = []) {
+            const col = document.createElement('div');
+            col.className = 'column';
+            col.dataset.id = id;
+            col.innerHTML = `
+                <div class="column-header">
+                    <div class="col-drag-handle" data-tooltip="Drag to reorder">⠿</div>
+                    <input class="column-title" type="text" data-tooltip="Click to rename" maxlength="100" />
+                    <button class="delete-col-btn" data-tooltip="Delete column">✕</button>
+                </div>
+                <div class="task-input-row">
+                    <input class="task-input" type="text" maxlength="500" />
+                    <button class="add-task-btn">Push It</button>
+                </div>
+                <ul class="task-list"></ul>
+                <div class="completed-divider">Rolled Over the Top</div>
+                <ul class="completed-list"></ul>`;
+
+            // Set column title via .value (not innerHTML) to prevent XSS from saved names
+            col.querySelector('.column-title').value = name;
+
+            col.querySelector('.column-title').addEventListener('change', saveBoard);
+            col.querySelector('.delete-col-btn').addEventListener('click', () => deleteColumn(col));
+            col.querySelector('.add-task-btn').addEventListener('click', () => addTask(col));
+            startPlaceholderRotation(col.querySelector('.task-input'));
+            col.querySelector('.task-input').addEventListener('keypress', e => {
+                if (e.key === 'Enter') addTask(col);
+            });
+
+            // Column drag handle
+            const handle = col.querySelector('.col-drag-handle');
+            handle.addEventListener('mousedown', () => col.draggable = true);
+            handle.addEventListener('mouseup', () => col.draggable = false);
+            col.addEventListener('dragstart', e => {
+                // Ignore if this is a task card drag bubbling up
+                if (draggedCard !== null || !col.draggable) return;
+                draggedColumn = col;
+                activeDropZone = null;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => { col.classList.add('col-dragging'); showDropZones(); }, 0);
+            });
+            col.addEventListener('dragend', () => {
+                col.draggable = false;
+                col.classList.remove('col-dragging');
+                if (draggedColumn && activeDropZone) {
+                    const nextEl = activeDropZone.nextElementSibling;
+                    insertColumnIntoBoard(draggedColumn, nextEl || addColumnBtn);
+                    saveBoard();
+                }
+                draggedColumn = null;
+                hideDropZones();
+            });
+
+            // Task card drop handling on column
+            col.addEventListener('dragover', e => {
+                e.preventDefault();
+                if (draggedCard) col.classList.add('drag-over');
+            });
+            col.addEventListener('dragleave', e => {
+                if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+            });
+            col.addEventListener('drop', e => {
+                e.preventDefault();
+                col.classList.remove('drag-over');
+                if (draggedCard) {
+                    const target = draggedCard.classList.contains('done')
+                        ? col.querySelector('.completed-list')
+                        : col.querySelector('.task-list');
+                    target.appendChild(draggedCard);
+                    document.querySelectorAll('.column').forEach(c => updateDivider(c));
+                    draggedCard = null;
+                    saveBoard();
+                }
+            });
+
+            tasks.forEach(t => col.querySelector('.task-list').appendChild(createTaskCard(t, false)));
+            completed.forEach(t => col.querySelector('.completed-list').appendChild(createTaskCard(t, true)));
+            updateDivider(col);
+            return col;
+        }
+
+        // ── Actions ───────────────────────────────────────────────────
+        function addTask(col) {
+            const input = col.querySelector('.task-input');
+            const text = input.value.trim();
+            if (!text) return;
+            col.querySelector('.task-list').prepend(createTaskCard(text, false));
+            input.value = '';
+            if (input._rotatePlaceholder) input._rotatePlaceholder();
+            saveBoard();
+        }
+
+        function toggleDone(card) {
+            const col = card.closest('.column');
+            const wasDone = card.classList.contains('done');
+            const isDone = card.classList.toggle('done');
+            const btn = card.querySelector('.done-btn');
+            btn.textContent = isDone ? 'It Rolled Back' : 'Summit!';
+            btn.classList.toggle('undo', isDone);
+            if (wasDone) playRollbackVideo();
+            else playSummitVideo();
+            col.querySelector(isDone ? '.completed-list' : '.task-list')[isDone ? 'appendChild' : 'prepend'](card);
+            updateDivider(col);
+            saveBoard();
+        }
+
+        function deleteTask(card) {
+            const col = card.closest('.column');
+            playCrushedVideo();
+            card.remove();
+            updateDivider(col);
+            saveBoard();
+        }
+
+        async function deleteColumn(col) {
+            const taskCount = col.querySelectorAll('.task-card').length;
+            const msg = taskCount > 0
+                ? `Abandon this struggle and its ${taskCount} task${taskCount > 1 ? 's' : ''}? This cannot be undone.`
+                : 'Abandon this struggle? This cannot be undone.';
+            const confirmed = await showModal({
+                type: 'confirm',
+                title: 'Abandon Struggle',
+                message: msg,
+                confirmLabel: 'Abandon',
+                danger: true
+            });
+            if (!confirmed) return;
+            // Clear placeholder rotation intervals before removing the column
+            col.querySelectorAll('.task-input').forEach(input => {
+                if (input._intervalId) clearInterval(input._intervalId);
+            });
+            col.remove();
+            saveBoard();
+        }
+
+        function addColumn(name = null, tasks = [], completed = []) {
+            if (!name) {
+                const count = document.querySelectorAll('.column').length + 1;
+                name = 'Mountain ' + count;
+            }
+            if (name.length > 100) name = name.slice(0, 100);
+            const id = createEntityId('col');
+            const col = createColumnElement(id, name, tasks, completed);
+            insertColumnIntoBoard(col);
+            saveBoard();
+            return col;
+        }
+
+        // ── Auth ──────────────────────────────────────────────────────
+        signInBtn.addEventListener('click', async () => {
+            signInError.style.display = 'none';
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+                    // Popup was blocked — fall back to redirect
+                    try { await signInWithRedirect(auth, provider); }
+                    catch (e2) {
+                        console.error('Redirect sign in failed:', e2);
+                        signInError.textContent = 'Sign in failed: ' + (e2.message || e2.code);
+                        signInError.style.display = 'block';
+                    }
+                } else {
+                    console.error('Sign in failed:', e);
+                    signInError.textContent = 'Sign in failed: ' + (e.message || e.code);
+                    signInError.style.display = 'block';
+                }
+            }
+        });
+
+        // Handle redirect result when returning from Google login without
+        // blocking subsequent event listener wiring.
+        getRedirectResult(auth).catch(e => {
+            console.error('Redirect result error:', e);
+        });
+
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await flushPendingSave();
+                // Sign out first; onAuthStateChanged will handle clearing the board UI
+                await signOut(auth);
+            } catch (e) {
+                console.error('Sign out failed:', e);
+                await showModal({ type: 'alert', title: 'Sign Out Failed', message: 'Sign out failed — please try again.' });
+            }
+        });
+
+        addColumnBtn.addEventListener('click', () => addColumn());
+        newTaskListBtn.addEventListener('click', createTaskList);
+        window.addEventListener('beforeunload', () => {
+            // Skip debounce and persist a local snapshot synchronously before close.
+            if (currentUser && activeBoardId) {
+                clearTimeout(saveBoardTimer);
+                saveBoardTimer = null;
+                const boardId = activeBoardId;
+                const columns = collectBoardColumns();
+                // Best-effort cloud enqueue; may not complete before teardown.
+                commitSaveNow(boardId, columns);
+            }
+        });
+
+        // Prevent snap-back when dropping column over child elements
+        document.addEventListener('dragover', e => {
+            if (draggedColumn) e.preventDefault();
+        });
+        document.addEventListener('drop', e => {
+            if (draggedColumn) e.preventDefault();
+        });
+
+        async function applyAuthenticatedState(user) {
+            currentUser = user;
+            loginScreen.style.display = 'none';
+            loadingScreen.style.display = 'flex';
+
+            const accountLabel = user.email || user.displayName || 'Unknown account';
+            userName.textContent = accountLabel;
+            userAvatar.src = user.photoURL || '';
+            userAvatar.style.display = user.photoURL ? 'block' : 'none';
+            userAvatar.dataset.tooltip = accountLabel;
+            userAvatar.alt = accountLabel;
+            userAvatar.setAttribute('aria-label', accountLabel);
+
+            userBar.style.display = 'flex';
+            sidebar.style.display = 'block';
+            boardStoreCache = null;
+            subscribeBoardStore();
+
+            await initializeBoards();
+            loadingScreen.style.display = 'none';
+            boardEl.style.display = 'flex';
+        }
+
+        async function applySignedOutState() {
+            await flushPendingSave();
+            unsubscribeBoardStoreListener();
+
+            currentUser = null;
+            activeBoardId = null;
+            boardList = [];
+            boardStoreCache = null;
+            pendingBoardCreates.clear();
+
+            cleanupColumns();
+            taskListNav.innerHTML = '';
+            updateBoardUserInfo();
+            userAvatar.src = '';
+            userAvatar.removeAttribute('data-tooltip');
+            userAvatar.alt = '';
+            userAvatar.removeAttribute('aria-label');
+            userAvatar.style.display = 'none';
+
+            boardEl.style.display = 'none';
+            loadingScreen.style.display = 'none';
+            userBar.style.display = 'none';
+            sidebar.style.display = 'none';
+            loginScreen.style.display = 'flex';
+        }
+
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                await applyAuthenticatedState(user);
+                return;
+            }
+            await applySignedOutState();
+        });
+    </script>
+</body>
+</html>
