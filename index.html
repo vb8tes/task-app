@@ -18,26 +18,53 @@
     <style>
         :root {
             --font-sans: "Montserrat", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-            --title-size: 32px;
+            --title-size: 30px;
             --title-weight: 700;
             --title-tracking: -0.02em;
-            --section-size: 20px;
+            --section-size: 19px;
             --section-weight: 600;
             --body-size: 16px;
             --body-weight: 400;
             --body-strong-weight: 500;
             --meta-size: 13px;
-            --meta-color-light: rgba(255,255,255,0.62);
-            --meta-color-dark: #6b737b;
-            --surface-card-bg: rgba(246, 249, 251, 0.9);
-            --surface-card-border: rgba(30, 40, 52, 0.12);
-            --surface-card-shadow: 0 8px 22px rgba(13, 23, 34, 0.12);
-            --surface-card-radius: 16px;
+            --meta-color-light: var(--text-on-dark-secondary);
+            --meta-color-dark: var(--text-on-light-muted);
+            --bg-overlay: #241A2E;
+            --chrome-bg: #33263F;
+            --panel-bg: #4A3B57;
+            --card-bg: #F2EEF4;
+            --card-bg-alt: #DED6E3;
+            --divider: #6E5D7D;
+            --text-on-dark-primary: #F4EFF7;
+            --text-on-dark-secondary: #C8BDD2;
+            --text-on-dark-muted: #9E91AA;
+            --text-on-light-primary: #2B2331;
+            --text-on-light-secondary: #5B4E66;
+            --text-on-light-muted: #7A6D85;
+            --accent: #5B6EF5;
+            --accent-hover: #4F62E6;
+            --accent-soft: rgba(91, 110, 245, 0.24);
+            --status-success: #C9A64D;
+            --status-failure: #7E6B86;
+            --status-danger: #A45C6B;
+            --task-card-bg: #DDD4E3;
+            --task-card-bg-active: #E2D9E8;
+            --task-card-bg-done: #C5BECB;
+            --task-card-border: rgba(70, 50, 90, 0.18);
+            --radius-structure: 20px;
+            --radius-card: 14px;
+            --radius-control: 10px;
+            --surface-card-bg: var(--card-bg);
+            --surface-card-border: rgba(110, 93, 125, 0.3);
+            --surface-card-shadow: 0 6px 16px rgba(22, 14, 31, 0.18);
+            --surface-card-radius: var(--radius-card);
             --surface-card-padding: 16px;
-            --dnd-drop-zone-bg: rgba(126, 169, 218, 0.38);
-            --dnd-drop-zone-border: rgba(146, 191, 241, 0.9);
-            --dnd-drop-zone-inset: inset 0 0 0 1px rgba(170, 208, 249, 0.65);
-            --dnd-drop-zone-glow: 0 0 12px rgba(126, 169, 218, 0.55);
+            --column-radius: var(--radius-structure);
+            --column-shell-min-height: 192px;
+            --dnd-drop-zone-bg: rgba(91, 110, 245, 0.22);
+            --dnd-drop-zone-border: rgba(126, 141, 255, 0.84);
+            --dnd-drop-zone-inset: inset 0 0 0 1px rgba(155, 166, 255, 0.62);
+            --dnd-drop-zone-glow: 0 0 10px rgba(91, 110, 245, 0.38);
         }
 
         html, body {
@@ -58,7 +85,11 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             text-rendering: optimizeLegibility;
-            padding: 80px 24px 40px 68px;
+            background:
+                linear-gradient(180deg, rgba(84, 66, 101, 0) 0%, rgba(36, 26, 46, 0) 28%, rgba(36, 26, 46, 0) 46%),
+                linear-gradient(180deg, rgba(36, 26, 46, 0) 0%, rgba(36, 26, 46, 0) 36%, rgba(36, 26, 46, 0) 100%);
+            color: var(--text-on-dark-primary);
+            padding: 88px 24px 40px 68px;
             box-sizing: border-box;
             min-height: 100%;
             min-width: max-content;
@@ -191,15 +222,15 @@
             max-width: 300px;
             padding: 6px 8px;
             border-radius: 6px;
-            border: 1px solid rgba(156, 186, 221, 0.45);
-            background: rgba(20, 26, 34, 0.92);
-            color: rgba(245, 250, 255, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(36, 26, 46, 0.92);
+            color: var(--text-on-dark-primary);
             font-size: 12px;
             line-height: 1.25;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+            box-shadow: 0 8px 18px rgba(10, 6, 16, 0.35);
             opacity: 0;
             visibility: hidden;
             transform: translateY(-2px);
@@ -216,9 +247,9 @@
         }
 
         #signout-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
+            background: rgba(74, 59, 87, 0.74);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: var(--text-on-dark-primary);
             border-radius: 4px;
             height: 32px;
             padding: 0 10px;
@@ -227,7 +258,10 @@
             cursor: pointer;
         }
 
-        #signout-btn:hover { background: rgba(255,255,255,0.28); }
+        #signout-btn:hover {
+            background: rgba(91, 110, 245, 0.24);
+            border-color: rgba(126, 141, 255, 0.46);
+        }
 
         /* ── Settings ─────────────────────────────────────────── */
         #settings-container {
@@ -236,9 +270,9 @@
         }
 
         #settings-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
+            background: rgba(74, 59, 87, 0.74);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: var(--text-on-dark-primary);
             border-radius: 6px;
             width: 32px;
             height: 32px;
@@ -248,7 +282,10 @@
             padding: 0;
         }
 
-        #settings-btn:hover { background: rgba(255,255,255,0.28); }
+        #settings-btn:hover {
+            background: rgba(91, 110, 245, 0.24);
+            border-color: rgba(126, 141, 255, 0.46);
+        }
 
         #settings-panel {
             display: none;
@@ -261,7 +298,7 @@
             padding: var(--surface-card-padding);
             min-width: 180px;
             box-shadow: var(--surface-card-shadow);
-            color: #222;
+            color: var(--text-on-light-primary);
             font-size: 14px;
         }
 
@@ -279,9 +316,9 @@
         .settings-version {
             margin-top: 10px;
             padding-top: 8px;
-            border-top: 1px solid rgba(0,0,0,0.12);
+            border-top: 1px solid rgba(110, 93, 125, 0.32);
             font-size: var(--meta-size);
-            color: #4f5965;
+            color: var(--text-on-light-muted);
             text-align: right;
             letter-spacing: 0.02em;
         }
@@ -289,14 +326,14 @@
         /* ── Sidebar ──────────────────────────────────────────── */
         #sidebar {
             position: fixed;
-            top: 80px;
+            top: 88px;
             left: 20px;
             bottom: 24px;
             width: 32px;
-            background: rgba(245, 245, 245, 0.16);
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: #30263A;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 14px 30px rgba(8, 5, 13, 0.4);
             z-index: 210;
             padding: 8px 0;
             box-sizing: border-box;
@@ -308,10 +345,10 @@
 
         #sidebar.expanded {
             width: 260px;
-            background: #5b6370;
-            border: 1px solid #778091;
-            border-radius: var(--surface-card-radius);
-            box-shadow: 0 12px 26px rgba(6, 12, 22, 0.26);
+            background: #30263A;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            box-shadow: 0 18px 34px rgba(8, 5, 13, 0.45);
             padding: var(--surface-card-padding);
             overflow: hidden;
             cursor: default;
@@ -323,7 +360,7 @@
             border: none;
             border-radius: 6px;
             background: transparent;
-            color: white;
+            color: var(--text-on-dark-primary);
             font-size: 18px;
             line-height: 1;
             cursor: pointer;
@@ -334,20 +371,20 @@
             margin-right: auto;
         }
 
-        #sidebar-toggle:hover { color: rgba(255,255,255,0.85); }
+        #sidebar-toggle:hover { color: var(--text-on-dark-secondary); }
 
         #sidebar.expanded #sidebar-toggle {
             width: 100%;
             margin-bottom: 10px;
-            border: 1px solid #8590a3;
-            background: #6c7686;
-            color: rgba(245,249,253,0.92);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(62, 47, 76, 0.86);
+            color: var(--text-on-dark-primary);
         }
 
         #sidebar.expanded #sidebar-toggle:hover {
-            background: rgba(106, 160, 222, 0.28);
-            border-color: rgba(146, 191, 241, 0.6);
-            color: rgba(222, 240, 255, 0.98);
+            background: rgba(91, 110, 245, 0.24);
+            border-color: rgba(126, 141, 255, 0.5);
+            color: var(--text-on-dark-primary);
         }
 
         #sidebar-content { display: none; }
@@ -359,9 +396,11 @@
         }
 
         #sidebar-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: rgba(248, 251, 255, 0.98);
+            letter-spacing: 0.02em;
+            color: var(--text-on-dark-secondary);
+            margin-bottom: 2px;
         }
 
         #task-list-nav {
@@ -375,17 +414,24 @@
         .task-list-item {
             width: 100%;
             box-sizing: border-box;
-            border: 1px solid #8792a5;
-            border-radius: var(--surface-card-radius);
-            background: #6f7a8a;
-            box-shadow: 0 4px 12px rgba(6, 12, 22, 0.18);
-            padding: var(--surface-card-padding);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-card);
+            background: rgba(75, 57, 93, 0.86);
+            box-shadow: 0 7px 14px rgba(7, 4, 11, 0.24);
+            padding: 13px 14px;
             text-align: left;
             cursor: grab;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin: 3px 0;
+            margin: 2px 0;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-list-item:hover {
+            background: rgba(88, 70, 104, 0.88);
         }
 
         .task-list-head {
@@ -408,9 +454,9 @@
         }
 
         .task-list-item.active {
-            border-color: #7ca8dc;
-            box-shadow: inset 2px 0 0 #93bbe8, 0 6px 14px rgba(6, 12, 22, 0.22);
-            background: #7d8ca1;
+            border-color: rgba(126, 141, 255, 0.56);
+            box-shadow: 0 10px 18px rgba(8, 5, 12, 0.3);
+            background: rgba(116, 100, 133, 0.94);
         }
 
         .task-list-item.dragging {
@@ -422,7 +468,7 @@
             height: 0;
             margin: 0;
             border-radius: 8px;
-            border: 1px dashed transparent;
+            border: 1px solid transparent;
             background: transparent;
             opacity: 0;
             pointer-events: none;
@@ -445,9 +491,9 @@
         }
 
         .task-list-name {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: rgba(250, 253, 255, 0.99);
+            color: var(--text-on-dark-primary);
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -455,10 +501,10 @@
         }
 
         .rename-list-btn {
-            border: 1px solid #8590a3;
-            background: #6b7585;
-            color: rgba(240,246,252,0.82);
-            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(51, 38, 63, 0.74);
+            color: var(--text-on-dark-secondary);
+            border-radius: 8px;
             font-size: 12px;
             line-height: 1;
             width: 28px;
@@ -472,16 +518,16 @@
         }
 
         .rename-list-btn:hover {
-            background: rgba(106, 160, 222, 0.28);
-            color: rgba(222, 240, 255, 0.98);
-            border-color: rgba(146, 191, 241, 0.6);
+            background: rgba(91, 110, 245, 0.24);
+            color: var(--text-on-dark-primary);
+            border-color: rgba(126, 141, 255, 0.55);
         }
 
         .delete-list-btn {
-            border: 1px solid #8590a3;
-            background: #6b7585;
-            color: rgba(240,246,252,0.82);
-            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(51, 38, 63, 0.74);
+            color: var(--text-on-dark-secondary);
+            border-radius: 8px;
             font-size: 18px;
             line-height: 1;
             width: 28px;
@@ -495,48 +541,49 @@
         }
 
         .delete-list-btn:hover {
-            background: rgba(255, 95, 95, 0.22);
-            color: rgba(255, 224, 224, 0.95);
+            background: rgba(164, 92, 107, 0.28);
+            color: var(--text-on-dark-primary);
+            border-color: rgba(164, 92, 107, 0.6);
         }
 
         #new-task-list-btn {
-            border: 1px solid rgba(154, 206, 255, 0.45);
+            border: 1px solid rgba(126, 141, 255, 0.5);
             border-radius: 6px;
             padding: 8px 10px;
             font-size: 14px;
             font-weight: var(--body-strong-weight);
-            background: rgba(102, 164, 224, 0.36);
-            color: rgba(246, 251, 255, 0.98);
+            background: rgba(91, 110, 245, 0.34);
+            color: var(--text-on-dark-primary);
             cursor: pointer;
         }
 
         #new-task-list-btn:hover {
-            background: rgba(102, 164, 224, 0.48);
-            border-color: rgba(180, 223, 255, 0.65);
+            background: rgba(91, 110, 245, 0.48);
+            border-color: rgba(150, 162, 255, 0.72);
         }
 
         /* ── Title ─────────────────────────────────────────────── */
         h1 {
             position: static;
-            color: rgba(245, 248, 252, 0.9);
+            color: #D9D0E0;
             text-align: center;
-            font-size: 21px;
-            font-weight: 400;
+            font-size: 19px;
+            font-weight: 500;
             font-style: italic;
             margin: 0;
-            letter-spacing: 0.01em;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.45);
+            letter-spacing: 0.02em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.36);
             z-index: 100;
             pointer-events: none;
         }
 
         #current-task-list-label {
             position: static;
-            color: white;
-            font-size: var(--title-size);
+            color: var(--text-on-dark-primary);
+            font-size: 28px;
             font-weight: 600;
-            letter-spacing: var(--title-tracking);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            letter-spacing: -0.015em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.45);
             justify-self: start;
             z-index: 100;
             cursor: pointer;
@@ -550,20 +597,21 @@
         /* ── Board ─────────────────────────────────────────────── */
         .board {
             display: flex;
-            gap: 16px;
+            gap: 18px;
             align-items: flex-start;
             padding-bottom: 24px;
         }
 
         /* ── Column ────────────────────────────────────────────── */
         .column {
-            background: rgba(246, 249, 251, 0.8);
-            border: 1px solid var(--surface-card-border);
-            border-radius: var(--surface-card-radius);
-            box-shadow: var(--surface-card-shadow);
-            padding: var(--surface-card-padding);
+            background: #453754;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--column-radius);
+            box-shadow: 0 12px 24px rgba(11, 7, 16, 0.22);
+            padding: 18px;
             min-width: 420px;
             width: 420px;
+            min-height: var(--column-shell-min-height);
             flex-shrink: 0;
             transition: background 0.15s, outline 0.15s;
             box-sizing: border-box;
@@ -571,7 +619,7 @@
 
         .column.drag-over {
             background: var(--dnd-drop-zone-bg);
-            outline: 2px dashed var(--dnd-drop-zone-border);
+            outline: 2px solid var(--dnd-drop-zone-border);
             box-shadow: var(--dnd-drop-zone-inset);
         }
 
@@ -579,13 +627,13 @@
             display: flex;
             align-items: center;
             margin-bottom: 16px;
-            gap: 10px;
-            min-height: 34px;
+            gap: 12px;
+            min-height: 38px;
         }
 
         .col-drag-handle {
             cursor: grab;
-            color: #96a0aa;
+            color: var(--text-on-dark-muted);
             font-size: 18px;
             width: 24px;
             text-align: center;
@@ -595,7 +643,7 @@
             line-height: 1;
         }
 
-        .col-drag-handle:hover { color: #888; }
+        .col-drag-handle:hover { color: var(--text-on-dark-secondary); }
         .col-drag-handle:active { cursor: grabbing; }
 
         .column.col-dragging { opacity: 0.35; }
@@ -606,8 +654,8 @@
             align-self: stretch;
             flex-shrink: 0;
             border-radius: 4px;
-            background: rgba(255,255,255,0.25);
-            border: 2px dashed rgba(255,255,255,0.4);
+            background: rgba(200, 189, 210, 0.12);
+            border: 2px solid rgba(255,255,255,0.18);
             transition: all 0.15s ease;
             box-sizing: border-box;
         }
@@ -623,25 +671,26 @@
             flex: 1;
             font-weight: var(--section-weight);
             font-size: var(--section-size);
-            color: #333;
+            line-height: 1.2;
+            color: var(--text-on-dark-primary);
             border: none;
             background: transparent;
-            padding: 3px 5px;
+            padding: 5px 6px;
             border-radius: 4px;
             cursor: pointer;
             min-width: 0;
         }
 
         .column-title:focus {
-            outline: 2px solid #4CAF50;
-            background: white;
+            outline: 2px solid var(--accent);
+            background: rgba(242, 238, 244, 0.14);
             cursor: text;
         }
 
         .delete-col-btn {
             background: transparent;
             border: none;
-            color: #8e98a3;
+            color: var(--text-on-dark-muted);
             cursor: pointer;
             font-size: 16px;
             padding: 2px 6px;
@@ -658,47 +707,63 @@
         }
 
         .delete-col-btn:hover {
-            color: #e74c3c;
-            background: rgba(231, 76, 60, 0.1);
+            color: var(--text-on-dark-primary);
+            background: rgba(164, 92, 107, 0.24);
             opacity: 1;
         }
 
         /* ── Task input ────────────────────────────────────────── */
         .task-input-row {
             display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 14px;
+            align-items: stretch;
         }
 
         .task-input {
             flex: 1;
-            padding: 8px;
+            padding: 10px 12px;
             font-size: var(--body-size);
             font-weight: var(--body-weight);
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            background: rgba(242, 238, 244, 0.94);
+            color: var(--text-on-light-primary);
+            border: 1px solid rgba(110, 93, 125, 0.35);
+            border-radius: var(--radius-control);
             min-width: 0;
+            min-height: 42px;
+            box-sizing: border-box;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: rgba(91, 110, 245, 0.64);
+            box-shadow: 0 0 0 2px rgba(91, 110, 245, 0.14);
         }
 
         .task-input::placeholder {
             font-style: italic;
-            color: #6f7883;
+            color: var(--text-on-light-muted);
             opacity: 1;
         }
 
         .add-task-btn {
             font-size: 15px;
             font-weight: var(--body-strong-weight);
-            background: #2b6ecf;
-            color: white;
+            background: var(--accent);
+            color: var(--text-on-dark-primary);
             border: none;
-            border-radius: 4px;
+            border-radius: var(--radius-control);
             cursor: pointer;
             flex-shrink: 0;
-            width: 90px;
+            width: 96px;
+            min-height: 42px;
+            box-shadow: 0 8px 16px rgba(52, 63, 153, 0.32);
         }
 
-        .add-task-btn:hover { background: #245fb2; }
+        .add-task-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 10px 18px rgba(52, 63, 153, 0.4);
+        }
 
         /* ── Task lists ────────────────────────────────────────── */
         .task-list,
@@ -709,31 +774,52 @@
             min-height: 20px;
         }
 
+        .task-insert-indicator {
+            list-style: none;
+            height: 8px;
+            margin: 4px 0 8px;
+            border-radius: 999px;
+            border: 2px solid var(--dnd-drop-zone-border);
+            background: var(--dnd-drop-zone-bg);
+            box-shadow: var(--dnd-drop-zone-inset);
+            pointer-events: none;
+        }
+
         /* ── Task card ─────────────────────────────────────────── */
         .task-card {
-            background: var(--surface-card-bg);
-            border: 1px solid var(--surface-card-border);
+            background: var(--task-card-bg);
+            border: 1px solid var(--task-card-border);
             padding: 12px;
-            margin-bottom: 6px;
+            margin-bottom: 10px;
             border-radius: var(--surface-card-radius);
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: grab;
-            box-shadow: 0 4px 14px rgba(13, 23, 34, 0.08);
-            transition: box-shadow 0.15s;
+            box-shadow: 0 3px 8px rgba(14, 10, 20, 0.12);
+            transition: box-shadow 0.15s, background 0.15s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .task-card:hover { box-shadow: 0 8px 18px rgba(13, 23, 34, 0.14); }
+        .task-card:hover,
+        .task-card:focus-within,
+        .task-card.editing {
+            background: var(--task-card-bg-active);
+            box-shadow: 0 8px 18px rgba(14, 10, 20, 0.2);
+        }
+
         .task-card.dragging { opacity: 0.45; cursor: grabbing; }
         .task-card.editing { cursor: default; }
-        .task-card.done span { text-decoration: line-through; color: #7e8793; }
+        .task-card.done { background: var(--task-card-bg-done); }
+        .task-card.done span { text-decoration: line-through; color: var(--text-on-light-muted); }
 
         .task-card span {
             flex: 1;
             font-size: 15px;
             font-weight: 500;
-            color: #2d333a;
+            line-height: 1.35;
+            color: var(--text-on-light-primary);
             word-break: break-word;
             cursor: text;
             border-radius: 6px;
@@ -744,15 +830,15 @@
         }
 
         .task-card span:not([contenteditable="true"]):hover {
-            outline-color: rgba(84, 126, 173, 0.45);
-            background: rgba(255,255,255,0.78);
+            outline-color: rgba(91, 110, 245, 0.4);
+            background: rgba(255, 255, 255, 0.28);
         }
 
         .task-card span[contenteditable="true"] {
-            outline: 2px solid rgba(84, 126, 173, 0.45);
+            outline: 2px solid rgba(91, 110, 245, 0.48);
             border-radius: 6px;
             padding: 2px 4px;
-            background: rgba(255,255,255,0.78);
+            background: rgba(255,255,255,0.56);
             text-decoration: none;
         }
 
@@ -760,54 +846,63 @@
         .card-buttons {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 4px;
             flex-shrink: 0;
-            margin-left: 6px;
-            width: 96px;
+            margin-left: 8px;
+            width: 108px;
         }
 
         .done-btn,
         .delete-task-btn {
             width: 100%;
-            padding: 4px 2px;
+            min-height: 30px;
+            padding: 6px 8px;
             font-size: 13px;
             font-weight: 500;
             line-height: 1.15;
             letter-spacing: 0;
             white-space: nowrap;
-            border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            color: white;
             text-align: center;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
 
         .done-btn {
-            background: #5A738F;
-            color: #F6FAFF;
-            border: 1px solid #506985;
+            background: var(--status-success);
+            color: var(--text-on-light-primary);
+            border: 1px solid rgba(88, 68, 24, 0.45);
+            box-shadow: 0 4px 10px rgba(88, 68, 24, 0.2);
         }
-        .done-btn:hover { background: #4F6781; }
-        .done-btn.undo { background: #78909C; }
-        .done-btn.undo:hover { background: #546E7A; }
+        .done-btn:hover {
+            background: #D1B25A;
+            box-shadow: 0 6px 12px rgba(88, 68, 24, 0.26);
+        }
+        .done-btn.undo {
+            background: var(--status-failure);
+            color: var(--text-on-dark-primary);
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: none;
+        }
+        .done-btn.undo:hover { background: #8A7793; }
         .delete-task-btn {
-            background: #E9EEF3;
-            color: #5F6B78;
-            border: 1px solid #D5DDE6;
+            background: rgba(255, 255, 255, 0.18);
+            color: var(--text-on-light-primary);
+            border: 1px solid rgba(110, 93, 125, 0.36);
         }
         .delete-task-btn:hover {
-            background: #F4E8E8;
-            color: #9A4E4E;
-            border-color: #E3CFCF;
+            background: var(--status-danger);
+            color: var(--text-on-dark-primary);
+            border-color: rgba(164, 92, 107, 0.9);
         }
 
         /* ── Completed divider ─────────────────────────────────── */
         .completed-divider {
             display: none;
             align-items: center;
-            color: #525b66;
+            color: var(--text-on-dark-secondary);
             font-size: 13px;
-            margin: 16px 0 12px;
+            margin: 18px 0 14px;
             gap: 8px;
         }
 
@@ -818,20 +913,21 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: #b5bcc5;
+            background: rgba(200, 189, 210, 0.42);
         }
 
         /* ── Add column button ─────────────────────────────────── */
         .add-column-btn {
-            background: rgba(246, 249, 251, 0.8);
-            border: 1px solid var(--surface-card-border);
-            border-radius: var(--surface-card-radius);
-            box-shadow: var(--surface-card-shadow);
+            background: rgba(90, 72, 109, 0.32);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: var(--column-radius);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
             min-width: 200px;
             width: 200px;
+            min-height: var(--column-shell-min-height);
             flex-shrink: 0;
             cursor: pointer;
-            color: #444;
+            color: var(--text-on-dark-secondary);
             font-size: 16px;
             font-weight: var(--body-strong-weight);
             text-align: center;
@@ -839,15 +935,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            align-self: stretch;
+            align-self: flex-start;
+            box-sizing: border-box;
             transition: box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
 
         .add-column-btn:hover {
-            background: rgba(246, 249, 251, 0.88);
-            color: #1a2530;
-            border-color: rgba(26, 37, 48, 0.18);
-            box-shadow: 0 10px 24px rgba(13, 23, 34, 0.14);
+            background: rgba(96, 79, 116, 0.42);
+            color: var(--text-on-dark-primary);
+            border-color: rgba(126, 141, 255, 0.42);
+            box-shadow: inset 0 0 0 1px rgba(126, 141, 255, 0.28);
         }
 
         /* ── Modal ─────────────────────────────────────────────── */
@@ -863,10 +960,10 @@
         }
 
         .modal-card {
-            background: #4e5a6b;
-            border: 1px solid #6b7a8e;
+            background: var(--chrome-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: var(--surface-card-radius);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+            box-shadow: 0 16px 38px rgba(9, 6, 14, 0.52);
             padding: 28px 28px 24px;
             width: 380px;
             max-width: calc(100vw - 48px);
@@ -878,21 +975,21 @@
         .modal-title {
             font-size: 18px;
             font-weight: 600;
-            color: rgba(245, 250, 255, 0.97);
+            color: var(--text-on-dark-primary);
             letter-spacing: -0.01em;
         }
 
         .modal-body {
             font-size: 14px;
-            color: rgba(220, 232, 245, 0.82);
+            color: var(--text-on-dark-secondary);
             line-height: 1.5;
         }
 
         .modal-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(242, 238, 244, 0.95);
+            border: 1px solid rgba(110, 93, 125, 0.35);
             border-radius: 6px;
-            color: rgba(245, 250, 255, 0.97);
+            color: var(--text-on-light-primary);
             font-size: 15px;
             font-weight: 500;
             padding: 9px 12px;
@@ -902,13 +999,13 @@
         }
 
         .modal-input::placeholder {
-            color: rgba(190, 210, 230, 0.5);
+            color: var(--text-on-light-muted);
             font-style: italic;
         }
 
         .modal-input:focus {
-            border-color: rgba(120, 175, 235, 0.65);
-            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(91, 110, 245, 0.62);
+            box-shadow: 0 0 0 2px rgba(91, 110, 245, 0.16);
         }
 
         .modal-actions {
@@ -929,18 +1026,18 @@
             transition: background 0.15s ease;
         }
 
-        .modal-btn-primary { background: #2b6ecf; color: white; }
-        .modal-btn-primary:hover { background: #245fb2; }
+        .modal-btn-primary { background: var(--accent); color: var(--text-on-dark-primary); }
+        .modal-btn-primary:hover { background: var(--accent-hover); }
 
         .modal-btn-secondary {
-            background: rgba(255, 255, 255, 0.12);
-            color: rgba(220, 232, 245, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(74, 59, 87, 0.8);
+            color: var(--text-on-dark-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.14);
         }
-        .modal-btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+        .modal-btn-secondary:hover { background: rgba(88, 70, 104, 0.9); }
 
-        .modal-btn-danger { background: #c0392b; color: white; }
-        .modal-btn-danger:hover { background: #a93226; }
+        .modal-btn-danger { background: var(--status-danger); color: var(--text-on-dark-primary); }
+        .modal-btn-danger:hover { background: #955463; }
     </style>
 </head>
 <body>
@@ -1041,6 +1138,7 @@
 
         let currentUser = null;
         let draggedCard = null;
+        let activeTaskDropList = null;
         let draggedColumn = null;
         let draggedTaskListId = null;
         let activeDropZone = null;
@@ -1081,6 +1179,8 @@
         const newTaskListBtn = document.getElementById('new-task-list-btn');
         const currentTaskListLabel = document.getElementById('current-task-list-label');
         const topBar = document.getElementById('top-bar');
+        const taskInsertIndicator = document.createElement('li');
+        taskInsertIndicator.className = 'task-insert-indicator';
         let animationsEnabled = localStorage.getItem(ANIMATIONS_KEY) !== 'false';
         const appTooltip = document.createElement('div');
         appTooltip.id = 'app-tooltip';
@@ -1516,8 +1616,9 @@
         });
 
         function updateSidebarTopOnScroll() {
-            // Start aligned with the column area (80px), then grow upward as the page scrolls.
-            const top = Math.max(24, 80 - window.scrollY);
+            // Keep sidebar aligned with the board start (body content top), then let it move up on scroll.
+            const boardTop = parseFloat(getComputedStyle(document.body).paddingTop) || 88;
+            const top = Math.max(24, boardTop - window.scrollY);
             sidebar.style.top = top + 'px';
         }
 
@@ -2713,6 +2814,100 @@
             col.querySelector('.completed-divider').classList.toggle('visible', hasCompleted);
         }
 
+        function clearColumnDragOverStates() {
+            document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+        }
+
+        function clearTaskInsertIndicator() {
+            taskInsertIndicator.remove();
+            activeTaskDropList = null;
+        }
+
+        function getTaskDropReference(listEl, clientY) {
+            const cards = Array.from(listEl.querySelectorAll('.task-card:not(.dragging)'));
+            let nearest = null;
+            let nearestOffset = Number.NEGATIVE_INFINITY;
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const offset = clientY - rect.top - rect.height / 2;
+                if (offset < 0 && offset > nearestOffset) {
+                    nearestOffset = offset;
+                    nearest = card;
+                }
+            });
+            return nearest;
+        }
+
+        function getAdjacentTaskCards(card) {
+            let prev = card.previousElementSibling;
+            while (prev && !prev.classList.contains('task-card')) prev = prev.previousElementSibling;
+            let next = card.nextElementSibling;
+            while (next && !next.classList.contains('task-card')) next = next.nextElementSibling;
+            return { prev, next };
+        }
+
+        function bindTaskListDropHandlers(col, listEl) {
+            listEl.addEventListener('dragover', e => {
+                if (!draggedCard) return;
+                const listIsDone = listEl.classList.contains('completed-list');
+                const draggedIsDone = draggedCard.classList.contains('done');
+                if (listIsDone !== draggedIsDone) return;
+
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                clearColumnDragOverStates();
+                col.classList.add('drag-over');
+
+                const beforeCard = getTaskDropReference(listEl, e.clientY);
+                if (beforeCard) listEl.insertBefore(taskInsertIndicator, beforeCard);
+                else listEl.appendChild(taskInsertIndicator);
+                activeTaskDropList = listEl;
+            });
+
+            listEl.addEventListener('dragleave', e => {
+                if (!draggedCard) return;
+                if (listEl.contains(e.relatedTarget)) return;
+                if (activeTaskDropList === listEl) clearTaskInsertIndicator();
+                if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+            });
+
+            listEl.addEventListener('drop', e => {
+                if (!draggedCard) return;
+                const listIsDone = listEl.classList.contains('completed-list');
+                const draggedIsDone = draggedCard.classList.contains('done');
+                if (listIsDone !== draggedIsDone) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                col.classList.remove('drag-over');
+
+                if (taskInsertIndicator.parentElement !== listEl) {
+                    const beforeCard = getTaskDropReference(listEl, e.clientY);
+                    if (beforeCard) listEl.insertBefore(taskInsertIndicator, beforeCard);
+                    else listEl.appendChild(taskInsertIndicator);
+                }
+                listEl.insertBefore(draggedCard, taskInsertIndicator);
+                clearTaskInsertIndicator();
+                clearColumnDragOverStates();
+
+                document.querySelectorAll('.column').forEach(c => updateDivider(c));
+
+                const taskId = draggedCard.dataset.taskId;
+                if (taskId && currentUser && activeBoardId) {
+                    const { prev, next } = getAdjacentTaskCards(draggedCard);
+                    const prevKey = prev?.dataset.orderKey || null;
+                    const nextKey = next?.dataset.orderKey || null;
+                    const newOrderKey = orderKeyBetween(prevKey, nextKey);
+                    draggedCard.dataset.orderKey = newOrderKey;
+                    updateDoc(taskDocRef(activeBoardId, taskId), {
+                        columnId: col.dataset.id,
+                        orderKey: newOrderKey
+                    }).catch(err => console.error('moveTask write failed:', err));
+                }
+                draggedCard = null;
+            });
+        }
+
         function createTaskCard(text, done = false, taskId = null) {
             const li = document.createElement('li');
             li.className = 'task-card' + (done ? ' done' : '');
@@ -2747,13 +2942,16 @@
             });
 
             li.addEventListener('dragstart', e => {
+                clearTaskInsertIndicator();
+                clearColumnDragOverStates();
                 draggedCard = li;
                 li.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
             });
             li.addEventListener('dragend', () => {
                 li.classList.remove('dragging');
-                document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+                clearTaskInsertIndicator();
+                clearColumnDragOverStates();
             });
             return li;
         }
@@ -2870,7 +3068,7 @@
                 </div>
                 <div class="task-input-row">
                     <input class="task-input" type="text" maxlength="500" />
-                    <button class="add-task-btn">Push It</button>
+                    <button class="add-task-btn">+ Boulder</button>
                 </div>
                 <ul class="task-list"></ul>
                 <div class="completed-divider">Rolled Over the Top</div>
@@ -2886,6 +3084,8 @@
             col.querySelector('.task-input').addEventListener('keypress', e => {
                 if (e.key === 'Enter') addTask(col);
             });
+            bindTaskListDropHandlers(col, col.querySelector('.task-list'));
+            bindTaskListDropHandlers(col, col.querySelector('.completed-list'));
 
             // Column drag handle
             const handle = col.querySelector('.col-drag-handle');
@@ -2914,7 +3114,7 @@
             // Task card drop handling on column
             col.addEventListener('dragover', e => {
                 e.preventDefault();
-                if (draggedCard) col.classList.add('drag-over');
+                if (draggedCard && !activeTaskDropList) col.classList.add('drag-over');
             });
             col.addEventListener('dragleave', e => {
                 if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
@@ -2923,6 +3123,8 @@
                 e.preventDefault();
                 col.classList.remove('drag-over');
                 if (draggedCard) {
+                    // If a list-level drop target handled insertion, do nothing here.
+                    if (activeTaskDropList) return;
                     const isDone = draggedCard.classList.contains('done');
                     const target = isDone
                         ? col.querySelector('.completed-list')
@@ -2941,6 +3143,7 @@
                             columnId: col.dataset.id, orderKey: newOrderKey
                         }).catch(e => console.error('moveTask write failed:', e));
                     }
+                    clearTaskInsertIndicator();
                     draggedCard = null;
                 }
             });
